@@ -1,0 +1,4 @@
+race_weather_number,races,hit_top1_rate,hit_top2_rate,avg_brier_score,low_sample
+1,21,0.6667,0.8095,0.0891,0
+2,15,0.4667,0.8,0.0977,0
+3,43,0.6279,0.7907,0.089,0
