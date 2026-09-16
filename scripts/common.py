@@ -100,3 +100,38 @@ def append_rows(csv_path, fieldnames, rows):
 
 def parse_date(s):
     return datetime.datetime.strptime(s, "%Y-%m-%d").date()
+
+
+# APIに「ナイター/デイ」の明示フラグが無いため、race_closed_at(締切時刻)から推定する暫定ルール。
+# 17時以降に締め切るレースはナイター(1)、それより前はデイ(0)とみなす。
+NIGHT_CLOSE_HOUR_JST = 17
+
+
+def is_night_race(closed_at_str):
+    """race_closed_at ("YYYY-MM-DD HH:MM:SS") からナイターかどうかを推定する。取得できなければNone。"""
+    if not closed_at_str:
+        return None
+    try:
+        closed_at = datetime.datetime.strptime(closed_at_str, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
+    return 1 if closed_at.hour >= NIGHT_CLOSE_HOUR_JST else 0
+
+
+def load_program_index(date_compact):
+    """data/programs/{date_compact}.csv を読み込み、
+    (stadium_number, race_number, boat_number) -> row の辞書(艇単位)と
+    (stadium_number, race_number) -> row の辞書(レース単位の項目=grade/closed_at等の取得用)
+    を返す。ファイルが無ければ両方とも空の辞書を返す。
+    """
+    by_boat = {}
+    by_race = {}
+    path = os.path.join(PROGRAMS_DIR, f"{date_compact}.csv")
+    if not os.path.exists(path):
+        return by_boat, by_race
+    with open(path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            by_boat[(row["stadium_number"], row["race_number"], row["boat_number"])] = row
+            by_race.setdefault((row["stadium_number"], row["race_number"]), row)
+    return by_boat, by_race

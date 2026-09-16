@@ -75,12 +75,30 @@ Public/Privateどちらでも構いません(データを他人に見られた�
 - `predictions/{YYYYMMDD}.csv` … その日のレースごとの予想スコア・予想順位・使用モデル(`model_used`列)。
   締切が近づいて`refresh_near_race.py`が更新したレースは、`actual_course_number`(実際の進入コース)・
   `exhibition_time`(展示タイム)・`updated_at`(更新時刻)も入り、`model_used`列に「+直前情報」と付きます
-- `data/results_races.csv` / `data/results_entries.csv` … 蓄積された過去の結果(Excel分析にそのまま使えます)
+- `data/results_races.csv` … レース単位の結果(天候・決まり手・払戻金など)。天候系カラムはAPIの
+  生フィールド名をそのまま使っています(`race_wind` / `race_wind_direction_number` / `race_wave` /
+  `race_weather_number` / `race_temperature` / `race_water_temperature` / `race_technique_number`)
+- `data/results_entries.csv` … 出走艇単位の結果。`entry_course_actual`(実際の進入コース)・
+  `entry_course_program`(出走表時点=艇番号ベースの想定進入コース)・`motor_2rate` / `motor_3rate`
+  (モーター2/3連率、同日の出走表データから補完)を含みます
 - `data/stats/course_stats.csv` … コース番号別の勝率・平均払戻金
 - `data/stats/racer_stats.csv` … 選手別の勝率
 - `data/stats/model.json` … 学習済みロジスティック回帰の係数(中身を見れば「何が勝敗に効いているか」がそのまま分かります)
-- `data/evaluations.csv` … 日別の振り返り結果(1位予想の的中率、確率の較正度合いなど)。ここを時系列で見ていくと、
-  学習が進むにつれて精度が上がっているかどうかを追跡できます
+- `data/evaluations.csv` … レース単位の振り返り結果(1レース=1行)。モデルが1位に予想した艇を主語に、
+  その艇の実際の進入コース・スタートタイミング・モーター成績、レースの格(`grade`)・昼夜(`is_night`、
+  締切時刻からの推定)・天候、的中結果(`hit_top1` / `hit_top2` / `brier_score`)などを記録します。
+  カラムはバケット化(「風速帯:中」等)せず、APIの生の値をそのまま保存する方針にしており、
+  集計・グラフ化は分析側(Excel・スクリプト)で行う想定です
+
+### 既存データのスキーマ移行
+
+過去に運用して `data/results_races.csv` / `data/results_entries.csv` が旧カラム名(`wind` /
+`course_number` 等)のまま残っている場合は、以下を一度だけ実行すると新スキーマに移行できます
+(バックアップとして `*.csv.bak` を残します。複数回実行しても安全です)。
+
+```bash
+python scripts/migrate_csv_schema.py
+```
 
 ### 学習が始まるタイミングについて
 `train_model.py` は **最低50レース分の結果データが溜まるまで学習をスキップ**します(データが少なすぎると

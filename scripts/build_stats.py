@@ -51,7 +51,7 @@ def main():
     with open(RESULTS_ENTRIES_CSV, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            course = row.get("course_number")
+            course = row.get("entry_course_actual")
             if course in (None, ""):
                 continue  # 進入コース不明(フライング等)の行はスキップ
 
