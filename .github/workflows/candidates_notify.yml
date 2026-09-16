@@ -12,7 +12,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "candidates.json"
+      - "data/candidates.json"
 
 jobs:
   notify:
@@ -35,4 +35,4 @@ jobs:
           subject: "【ボートレース予想】本日の参加候補レース (${{ steps.jst_date.outputs.date }})"
           to: ${{ secrets.NOTIFY_EMAIL_TO }}
           from: "boatrace-predictor <${{ secrets.GMAIL_USERNAME }}>"
-          body: file://candidates.json
+          body: file://data/candidates.json
