@@ -1,0 +1,46 @@
+name: Near-race refresh (直前情報チェック)
+
+on:
+  schedule:
+    # 5分おき、日本時間9:00〜23:55(=UTC 0:00〜14:55)の間だけ実行
+    # GitHub Actionsの仕様上、実際の実行タイミングは数分前後することがあります
+    - cron: "*/5 0-14 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: near-race-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Refresh predictions for races closing soon
+        working-directory: scripts
+        run: python refresh_near_race.py
+
+      - name: Commit and push if updated
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add predictions
+          if ! git diff --cached --quiet; then
+            git commit -m "Near-race refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          else
+            echo "No changes to commit"
+          fi

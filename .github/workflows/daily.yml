@@ -1,0 +1,58 @@
+name: Daily boatrace data & predictions
+
+on:
+  schedule:
+    # 毎日 01:00 UTC = 10:00 JST に実行
+    # (前日のレースは全て終了しており、当日の出走表も公開されている時間帯)
+    - cron: "0 1 * * *"
+  workflow_dispatch: {}   # 手動実行用ボタンを有効にする
+
+permissions:
+  contents: write   # 結果をリポジトリにコミットするために必要
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch yesterday's results and rebuild stats
+        working-directory: scripts
+        run: |
+          python fetch_results.py
+          python build_stats.py
+
+      - name: Evaluate yesterday's predictions (振り返り)
+        working-directory: scripts
+        run: python evaluate.py
+
+      - name: Retrain model on accumulated data (学習)
+        working-directory: scripts
+        run: python train_model.py
+
+      - name: Fetch today's program and predict
+        working-directory: scripts
+        run: |
+          python fetch_program.py
+          python predict.py
+
+      - name: Commit and push updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data predictions
+          if ! git diff --cached --quiet; then
+            git commit -m "Daily data update $(date -u +'%Y-%m-%d')"
+            git push
+          else
+            echo "No changes to commit"
+          fi
