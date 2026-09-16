@@ -115,6 +115,29 @@ CSVはGitHub上でそのまま見られますし、「Download raw file」でダ
 開くこともできます。以前お話しした「コース別回収率」「決まり手別」などの分析は、
 `data/results_entries.csv` と `data/results_races.csv` を使ってそのまま実践できます。
 
+## バックテスト(ウォークフォワード検証)
+
+`scripts/backtest.py` は、過去の各日について「その日より前のデータだけ」でモデルを
+日次で再学習し直し、その日のレースを予想・評価するウォークフォワード検証です
+(本番のtrain_model.pyと同じ日次粒度)。単純な「場ごとに過去最高勝率の進入コースを
+常に予想する」ナイーブベースラインも同じ「過去のみ使用」ルールで計算し、モデルが
+それを本当に上回っているかを比較できます。
+
+対象期間(デフォルト2025-05-01〜)のデータが `data/programs/` `data/results_*.csv` に
+揃っている必要があります。日次運用は「今日」「昨日」しか取得しないため、長期間を
+検証するには先に一括取得が必要です:
+
+```bash
+cd scripts
+python backfill.py 2025-05-01              # 2025-05-01〜今日まで一括取得(時間がかかります)
+python backtest.py                          # 2025-05-01〜取得済みデータの最終日で検証
+python backtest.py 2025-05-01 2025-08-31    # 期間を指定して検証
+```
+
+結果は `data/backtest_evaluations.csv`(レース単位)・`data/backtest_daily_summary.csv`
+(日別サマリー、モデル vs ナイーブ)・`data/stats/backtest_axes/single_*.csv`
+(Phase3と同じ軸でモデル/ナイーブを横並び集計)に出力されます。
+
 ## 手元(ローカルPC)で試したい場合
 
 ```bash
