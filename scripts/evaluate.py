@@ -13,6 +13,9 @@ predictions/{date}.csv (その日の予想) と data/results_entries.csv / data/
 is_night(昼夜)はAPIに明示フラグが無いため、締切時刻からの簡易推定(common.is_night_race参照)。
 grade は race_grade_number の生コード(1=SG等、バケット化はしない)。
 
+per-race行の追記が終わったら、蓄積済みの全データから Phase 3 の軸別集計(単独軸・掛け合わせ軸)を
+やり直し、data/stats/axes/*.csv に書き出す(axes.py参照)。
+
 使い方:
     python scripts/evaluate.py             # 昨日の分を評価
     python scripts/evaluate.py 2025-07-15   # 指定日を評価
@@ -23,9 +26,10 @@ import os
 import sys
 from collections import defaultdict
 
+import axes
 from common import (
     today_jst,
-    DATA_DIR,
+    EVALUATIONS_CSV,
     PREDICTIONS_DIR,
     RESULTS_ENTRIES_CSV,
     RESULTS_RACES_CSV,
@@ -35,8 +39,6 @@ from common import (
     load_program_index,
     parse_date,
 )
-
-EVALUATIONS_CSV = os.path.join(DATA_DIR, "evaluations.csv")
 
 EVAL_FIELDS = [
     "race_date", "venue_code", "race_number", "grade", "is_night",
@@ -216,6 +218,9 @@ def main():
     brier_part = f" / 平均brier={avg_brier:.4f}" if avg_brier is not None else ""
     print(f"[done] {date_str}: {n}レースを評価しました "
           f"(top1的中率={top1_rate*100:.1f}% / top2的中率={top2_rate*100:.1f}%{brier_part})")
+
+    n_eval, n_entries = axes.run_all()
+    print(f"[done] 軸別集計を更新しました(evaluations={n_eval}行 / entries={n_entries}行)")
 
 
 if __name__ == "__main__":

@@ -33,6 +33,8 @@ RESULTS_RACES_CSV = os.path.join(DATA_DIR, "results_races.csv")
 RESULTS_ENTRIES_CSV = os.path.join(DATA_DIR, "results_entries.csv")
 COURSE_STATS_CSV = os.path.join(STATS_DIR, "course_stats.csv")
 RACER_STATS_CSV = os.path.join(STATS_DIR, "racer_stats.csv")
+EVALUATIONS_CSV = os.path.join(DATA_DIR, "evaluations.csv")
+AXES_DIR = os.path.join(STATS_DIR, "axes")
 
 
 def fetch_json(url, retries=3, wait_sec=3):
