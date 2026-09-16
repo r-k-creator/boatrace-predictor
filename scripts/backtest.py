@@ -153,65 +153,103 @@ def feature_names_for(variant):
     return names
 
 
-def build_feature_vector(variant, non_weather_vals, weather_vals, boat_number, stadium_number):
+# ロジスティック回帰の速度対策: 選手成績(%、0〜100)・スタートタイミング(0〜0.3)・
+# 気温(0〜40)のようにスケールが大きく異なる特徴量を生の値のまま混在させると、
+# lbfgsソルバーの収束が極端に遅くなる(小規模テストでも1000回反復の上限に達する
+# ConvergenceWarningが出ていた)。日毎に、その時点までの蓄積データの平均・標準偏差で
+# 各連続値特徴量をz-score標準化してから学習・推論することで、収束を大幅に速くする
+# (艇番号・場のone-hotダミーは0/1のままで問題ないためスケールしない)。
+# 標準化してもロジスティック回帰が到達する決定境界(=予測順位)は理論上ほぼ同じになる
+# 一方、収束に必要な反復回数は大きく減る。
+MAX_ITER = 300  # 標準化により収束が速くなる前提での上限(本番train_model.pyの1000から引き下げ)
+MIN_STD = 1e-6  # 分散がほぼ0の列で0除算しないための下限
+
+
+def compute_scaling(stat_sums, stat_sumsq, stat_count):
+    """(NON_WEATHER_COLUMNS + WEATHER_COLUMNS) それぞれの平均・標準偏差を返す。"""
+    means, stds = {}, {}
+    for col in NON_WEATHER_COLUMNS + WEATHER_COLUMNS:
+        if stat_count:
+            mean = stat_sums[col] / stat_count
+            variance = max(stat_sumsq[col] / stat_count - mean * mean, 0.0)
+        else:
+            mean, variance = 0.0, 0.0
+        means[col] = mean
+        stds[col] = max(variance ** 0.5, MIN_STD)
+    return means, stds
+
+
+def scale_value(value, mean, std):
+    return (value - mean) / std
+
+
+def build_feature_vector(variant, non_weather_vals, weather_vals, boat_number, stadium_number, means, stds):
     boat_onehot = [1.0 if boat_number == b else 0.0 for b in train_model.BOAT_NUMBERS]
     stadium_onehot = [1.0 if stadium_number == s else 0.0 for s in train_model.STADIUM_NUMBERS]
 
-    vec = list(non_weather_vals)
+    scaled_non_weather = [
+        scale_value(v, means[c], stds[c]) for v, c in zip(non_weather_vals, NON_WEATHER_COLUMNS)
+    ]
+    scaled_weather = [
+        scale_value(v, means[c], stds[c]) for v, c in zip(weather_vals, WEATHER_COLUMNS)
+    ]
+
+    vec = list(scaled_non_weather)
     if variant in ("b", "c"):
-        vec += list(weather_vals)
+        vec += list(scaled_weather)
     vec += boat_onehot + stadium_onehot
     if variant == "c":
-        for wv in weather_vals:
+        for wv in scaled_weather:
             vec += [wv if boat_number == b else 0.0 for b in train_model.BOAT_NUMBERS]
     return vec
 
 
-def fit_variant_model(variant, train_X, train_y, weather_sums, weather_count):
+def fit_variant_model(variant, train_X, train_y, means, stds):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         from sklearn.linear_model import LogisticRegression
-        clf = LogisticRegression(max_iter=1000)
+        clf = LogisticRegression(max_iter=MAX_ITER)
         clf.fit(train_X, train_y)
 
     names = feature_names_for(variant)
     coefficients = dict(zip(names, clf.coef_[0].tolist()))
-    feature_means = {
-        col: (weather_sums[col] / weather_count if weather_count else 0.0)
-        for col in WEATHER_COLUMNS
-    }
     return {
         "variant": variant,
         "intercept": clf.intercept_[0],
         "coefficients": coefficients,
-        "feature_means": feature_means,
+        "means": means,
+        "stds": stds,
     }
 
 
 def score_variant(row, model, weather_source):
     """row: programsの艇1行分(dict)。weather_source: その日のpreviewsから取れた実測
-    天候dict(無ければNone)。variant='a'は天候を一切使わない。variant='b'は本番の
-    predict.score_with_modelと数学的に同一の計算(天候は常に学習時平均で埋める、
-    weather_sourceは無視)。variant='c'はさらに天候×艇番号の交互作用項を加える。
+    天候dict(無ければNone)。variant='a'は天候を一切使わない。variant='b'は天候を
+    常に学習時平均で埋める(埋めた値は標準化後は0になる、つまりモデルへの寄与は
+    boat/stadium項のみに委ねられる)。variant='c'はさらに天候×艇番号の交互作用項を
+    加え、可能ならpreviewsの実測天候を使う。
     """
     variant = model["variant"]
     coefficients = model["coefficients"]
-    feature_means = model["feature_means"]
+    means = model["means"]
+    stds = model["stds"]
     score = model["intercept"]
 
     for col in NON_WEATHER_COLUMNS:
-        score += coefficients[col] * predict.to_float(row.get(col), default=0.0)
+        raw = predict.to_float(row.get(col), default=means.get(col, 0.0))
+        score += coefficients[col] * scale_value(raw, means[col], stds[col])
 
-    weather_values = {}
+    weather_scaled = {}
     if variant in ("b", "c"):
         for col in WEATHER_COLUMNS:
-            v = None
+            raw = None
             if variant == "c" and weather_source is not None:
-                v = predict.to_float(weather_source.get(col), default=None)
-            if v is None:
-                v = feature_means.get(col, 0.0)
-            weather_values[col] = v
-            score += coefficients[col] * v
+                raw = predict.to_float(weather_source.get(col), default=None)
+            if raw is None:
+                raw = means.get(col, 0.0)  # 欠損時は学習時平均で埋める(標準化後は0)
+            sv = scale_value(raw, means[col], stds[col])
+            weather_scaled[col] = sv
+            score += coefficients[col] * sv
 
     boat_number = row.get("boat_number")
     for b in train_model.BOAT_NUMBERS:
@@ -224,7 +262,7 @@ def score_variant(row, model, weather_source):
 
     if variant == "c":
         for col in WEATHER_COLUMNS:
-            score += coefficients.get(f"{col}_x_boat_{boat_number}", 0.0) * weather_values[col]
+            score += coefficients.get(f"{col}_x_boat_{boat_number}", 0.0) * weather_scaled[col]
 
     return 1 / (1 + math.exp(-score))
 
@@ -453,8 +491,9 @@ def main():
     train_X = {v: [] for v in VARIANTS}
     train_y = []
     race_keys_seen = set()
-    weather_sums = {col: 0.0 for col in WEATHER_COLUMNS}
-    weather_count = 0
+    stat_sums = {col: 0.0 for col in NON_WEATHER_COLUMNS + WEATHER_COLUMNS}
+    stat_sumsq = {col: 0.0 for col in NON_WEATHER_COLUMNS + WEATHER_COLUMNS}
+    stat_count = 0
     national_course_stats = defaultdict(lambda: {"races": 0, "wins": 0})
     venue_course_stats = defaultdict(lambda: {"races": 0, "wins": 0})
 
@@ -464,11 +503,12 @@ def main():
     for date_str in candidate_dates:
         date_compact = date_str.replace("-", "")
         n_races_so_far = len(race_keys_seen)
+        means, stds = compute_scaling(stat_sums, stat_sumsq, stat_count)
 
         models = {}
         if n_races_so_far >= train_model.MIN_TRAINING_RACES:
             for v in VARIANTS:
-                models[v] = fit_variant_model(v, train_X[v], train_y, weather_sums, weather_count)
+                models[v] = fit_variant_model(v, train_X[v], train_y, means, stds)
 
         course_win_rates = {
             course: (s["wins"] / s["races"] if s["races"] else 0.0)
@@ -611,6 +651,13 @@ def main():
                   f"hit1: a={hits['a']*100:.1f}% b={hits['b']*100:.1f}% c={hits['c']*100:.1f}%")
 
         # --- Dのデータを「過去」として蓄積する(D+1以降の学習・ナイーブ統計にのみ使われる) ---
+        # 2パスに分ける: (1)Dの生の値を集めて統計(stat_sums等)を先に更新し、
+        # (2)「Dまで含めた」平均・標準偏差でDの行をスケーリングして積む。
+        # 1パスで「Dより前(=今日開始時点)の統計」を使ってDの行をスケーリングすると、
+        # 最初の1日目は蓄積0件からスタートするため平均0・標準偏差がフロア値(MIN_STD)に
+        # なり、スケーリング後の値が桁違いに爆発してモデルが崩壊する(実際に発生した不具合)。
+        # スコアリング(推論)側は既存通り「Dより前」のmeans/stdsを使う(リークにならない)。
+        day_raw_rows = []
         for row in programs_by_date[date_str]:
             key = (row["stadium_number"], row["race_number"])
             weather_row = race_level.get((date_str, row["stadium_number"], row["race_number"]), {})
@@ -646,16 +693,26 @@ def main():
 
             boat_number = row["boat_number"]
             stadium_number = row["stadium_number"]
-            for v in VARIANTS:
-                train_X[v].append(
-                    build_feature_vector(v, non_weather_vals, weather_vals, boat_number, stadium_number)
-                )
-            train_y.append(label)
+            day_raw_rows.append((non_weather_vals, weather_vals, boat_number, stadium_number, label))
             race_keys_seen.add(key + (date_str,))
 
+            for i, col in enumerate(NON_WEATHER_COLUMNS):
+                stat_sums[col] += non_weather_vals[i]
+                stat_sumsq[col] += non_weather_vals[i] ** 2
             for i, col in enumerate(WEATHER_COLUMNS):
-                weather_sums[col] += weather_vals[i]
-            weather_count += 1
+                stat_sums[col] += weather_vals[i]
+                stat_sumsq[col] += weather_vals[i] ** 2
+            stat_count += 1
+
+        fold_means, fold_stds = compute_scaling(stat_sums, stat_sumsq, stat_count)
+        for non_weather_vals, weather_vals, boat_number, stadium_number, label in day_raw_rows:
+            for v in VARIANTS:
+                train_X[v].append(
+                    build_feature_vector(
+                        v, non_weather_vals, weather_vals, boat_number, stadium_number, fold_means, fold_stds
+                    )
+                )
+            train_y.append(label)
 
         for row in entries_by_date[date_str]:
             course = row.get("entry_course_actual")
