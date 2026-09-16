@@ -25,6 +25,7 @@ PREVIEWS_BASE = "https://boatraceopenapi.github.io/previews/v2"
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 STATS_DIR = os.path.join(DATA_DIR, "stats")
 PROGRAMS_DIR = os.path.join(DATA_DIR, "programs")
+PREVIEWS_DIR = os.path.join(DATA_DIR, "previews")
 PREDICTIONS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "predictions"
 )
@@ -72,6 +73,7 @@ def ensure_dirs():
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(STATS_DIR, exist_ok=True)
     os.makedirs(PROGRAMS_DIR, exist_ok=True)
+    os.makedirs(PREVIEWS_DIR, exist_ok=True)
     os.makedirs(PREDICTIONS_DIR, exist_ok=True)
 
 
