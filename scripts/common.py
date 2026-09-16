@@ -19,6 +19,22 @@ def today_jst():
     """日本時間での「今日の日付」を返す(サーバーのタイムゾーンに依存しないようにするため)。"""
     return datetime.datetime.now(JST).date()
 
+# --- データソースのバージョン(切り替えるならここ3行だけ) ---------------------
+# 現状: boatraceopenapi/{programs,results,previews} の v2。3リポジトリとも
+# 「非推奨、後継は boatraceopenapi/api」と明記されているが、2026-09-16時点でも
+# 日次更新は継続中。対応期間は2025-05-01〜で、このプロジェクトが持つ蓄積データの
+# 開始日と一致する。
+#
+# 後継の boatraceopenapi/api(v1)は出走表・直前情報・結果を1つのエンドポイントに
+# 統合しているが、対応期間が2026-01-01〜しか無く(2026-09-16時点)、このプロジェクトの
+# 2025-05-01〜の蓄積データより後からしか始まっていない。ミラーの api-mirror
+# (旧 hub)も同様。したがって現時点では移行しない: api側のアーカイブが十分な
+# 期間(目安1年分)溜まり、かつ実際に更新停止の兆候が出るまでは現状維持とする。
+#
+# 実際に移行する場合の注意: 単にURLを差し替えるだけでは済まない。api は
+# 出走表・直前情報・結果を1つのJSONに統合したスキーマのため、
+# fetch_program.py/fetch_results.py/fetch_previews.py の3スクリプトに分かれた
+# 現在のパース処理を作り直す必要がある(このコメント自体は移行判断の記録用)。
 RESULTS_BASE = "https://boatraceopenapi.github.io/results/v2"
 PROGRAMS_BASE = "https://boatraceopenapi.github.io/programs/v2"
 PREVIEWS_BASE = "https://boatraceopenapi.github.io/previews/v2"
