@@ -1,21 +1,16 @@
-name: Near-race refresh (直前情報チェック)
+name: Morning program fetch & predict
 
 on:
   schedule:
-    # 5分おき、日本時間9:00〜23:55(=UTC 0:00〜14:55)の間だけ実行
-    # GitHub Actionsの仕様上、実際の実行タイミングは数分前後することがあります
-    - cron: "*/5 0-14 * * *"
+    # 毎日 23:00 UTC = 8:00 JST に実行(Coworkの候補選定タスク8:15より前に終わらせる)
+    - cron: "0 23 * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
-concurrency:
-  group: near-race-refresh
-  cancel-in-progress: false
-
 jobs:
-  refresh:
+  run:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -29,17 +24,19 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Refresh predictions for races closing soon
+      - name: Fetch today's program and predict
         working-directory: scripts
-        run: python refresh_near_race.py
+        run: |
+          python fetch_program.py
+          python predict.py
 
-      - name: Commit and push if updated
+      - name: Commit and push updated data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add predictions
+          git add data predictions
           if ! git diff --cached --quiet; then
-            git commit -m "Near-race refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git commit -m "Morning program fetch & predict $(date -u +'%Y-%m-%d')"
             git push
           else
             echo "No changes to commit"

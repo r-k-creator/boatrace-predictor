@@ -1,0 +1,38 @@
+name: Candidates.json insurance check
+
+# Coworkのスケジュールタスク(8:15頃、candidates.jsonを生成・コミットする想定)が
+# 何らかの理由で失敗した/実行されなかった場合の保険。本日分のcandidates.jsonが
+# 更新されていなければジョブを失敗させ、GitHubの標準のワークフロー失敗通知
+# (リポジトリの通知設定に従ってメール等が届く)で気付けるようにする。
+# 新たにメール送信を組み込みたい場合は、このジョブの失敗をトリガーに
+# dawidd6/action-send-mail 等を追加すればよい。
+
+on:
+  schedule:
+    # 毎日 00:00 UTC = 9:00 JST に実行(Coworkの8:15タスクの後)
+    - cron: "0 0 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # candidates.jsonの最終コミット日時を見るため全履歴を取得
+
+      - name: Check candidates.json was updated today (JST)
+        run: |
+          TODAY_JST=$(TZ='Asia/Tokyo' date +%Y-%m-%d)
+          if [ ! -f candidates.json ]; then
+            echo "::error::candidates.json が存在しません(Coworkタスクが実行されていない可能性)"
+            exit 1
+          fi
+          LAST_COMMIT_DATE=$(TZ='Asia/Tokyo' git log -1 --date=format-local:%Y-%m-%d --format=%cd -- candidates.json)
+          echo "本日(JST): $TODAY_JST / candidates.json最終更新(JST): $LAST_COMMIT_DATE"
+          if [ "$LAST_COMMIT_DATE" != "$TODAY_JST" ]; then
+            echo "::error::candidates.json が本日($TODAY_JST)更新されていません(最終更新: $LAST_COMMIT_DATE)。Coworkの候補選定タスクをご確認ください。"
+            exit 1
+          fi
+          echo "OK: candidates.json は本日更新されています"

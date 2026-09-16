@@ -1,0 +1,38 @@
+name: Candidates notification email
+
+# candidates.json が更新されてpushされたら、その内容をメールで送る。
+# 使用前に、リポジトリの Settings > Secrets and variables > Actions で
+# 以下のSecretsを登録してください:
+#   GMAIL_USERNAME      … 送信元のGmailアドレス
+#   GMAIL_APP_PASSWORD  … Gmailのアプリパスワード(通常のログインパスワードではない。
+#                          2段階認証を有効にした上でGoogleアカウント設定から発行する)
+#   NOTIFY_EMAIL_TO     … 送信先メールアドレス(自分宛でも可)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "candidates.json"
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compute today's date (JST)
+        id: jst_date
+        run: echo "date=$(TZ='Asia/Tokyo' date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Send candidates.json by email
+        uses: dawidd6/action-send-mail@v22
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "【ボートレース予想】本日の参加候補レース (${{ steps.jst_date.outputs.date }})"
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: "boatrace-predictor <${{ secrets.GMAIL_USERNAME }}>"
+          body: file://candidates.json
