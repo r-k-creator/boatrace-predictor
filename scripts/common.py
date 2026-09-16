@@ -6,6 +6,7 @@ https://github.com/boatraceopenapi
 import csv
 import datetime
 import os
+import random
 import time
 import urllib.request
 import urllib.error
@@ -38,16 +39,25 @@ EVALUATIONS_CSV = os.path.join(DATA_DIR, "evaluations.csv")
 AXES_DIR = os.path.join(STATS_DIR, "axes")
 
 
+REQUEST_WAIT_RANGE_SEC = (0.3, 0.5)  # 連続リクエスト間の待機時間(サーバーへの配慮のため)
+
+
 def fetch_json(url, retries=3, wait_sec=3):
-    """指定URLからJSONを取得する。データが無い日は404が返るのでNoneを返す。"""
+    """指定URLからJSONを取得する。データが無い日は404が返るのでNoneを返す。
+    backfill.py等で短時間に大量のリクエストを送ることがあるため、
+    (成功・404にかかわらず)返る前に毎回短いウェイトを入れる。
+    """
     last_err = None
     for attempt in range(retries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "boatrace-predictor/1.0"})
             with urllib.request.urlopen(req, timeout=20) as resp:
-                return json.loads(resp.read().decode("utf-8"))
+                result = json.loads(resp.read().decode("utf-8"))
+            time.sleep(random.uniform(*REQUEST_WAIT_RANGE_SEC))
+            return result
         except urllib.error.HTTPError as e:
             if e.code == 404:
+                time.sleep(random.uniform(*REQUEST_WAIT_RANGE_SEC))
                 return None
             last_err = e
         except Exception as e:  # noqa: BLE001

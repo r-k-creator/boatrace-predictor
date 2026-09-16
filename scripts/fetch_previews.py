@@ -38,7 +38,13 @@ def parse_previews(payload):
     for race in payload.get("previews", []):
         stadium_number = race.get("race_stadium_number")
         race_number = race.get("race_number")
-        for boat in race.get("boats", []):
+        boats = race.get("boats", [])
+        # 2025-08-28〜2026-07-11あたりのデータは boats が配列ではなく
+        # {"1": {...}, "2": {...}, ...} というオブジェクト形式で返ってくる(API側の仕様揺れ)。
+        # どちらの形でも艇データのリストとして扱えるようにする。
+        if isinstance(boats, dict):
+            boats = boats.values()
+        for boat in boats:
             rows.append({
                 "race_date": race.get("race_date"),
                 "stadium_number": stadium_number,
