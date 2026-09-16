@@ -1,0 +1,3 @@
+is_night,races,model_hit_top1_rate,model_hit_top2_rate,model_avg_brier,naive_hit_top1_rate,naive_races,low_sample
+0,59852,0.5254,0.7292,0.1057,0.5227,59635,0
+1,17023,0.6167,0.785,0.0944,0.6175,16953,0

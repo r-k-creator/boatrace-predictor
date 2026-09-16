@@ -1,0 +1,4 @@
+variant,races_evaluated,races_with_model,hit_top1_rate,hit_top2_rate,avg_brier_score
+a,76875,76720,0.5461,0.7435,0.1031
+b,76875,76720,0.5461,0.7433,0.1031
+c,76875,76720,0.5461,0.742,0.1031
