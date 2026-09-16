@@ -54,6 +54,12 @@ STADIUM_NUMBERS = [str(n) for n in range(1, 25)]
 
 MIN_TRAINING_RACES = 100  # 特徴量が増えたため暫定的に50から引き上げ。正式な水準はPhase4のバックテストで検討する。
 
+# 選手成績(%、0〜100)・スタートタイミング(0〜0.3)・気温(0〜40)のようにスケールが
+# 大きく異なる特徴量を生の値のまま混在させると、lbfgsソルバーの収束が極端に遅くなる
+# (ConvergenceWarningが出ていた)。backtest.pyで確認済みのz-score標準化を本番にも移植する
+# (艇番号・場のone-hotダミーは0/1のままで問題ないためスケールしない)。
+MIN_STD = 1e-6  # 分散がほぼ0の列で0除算しないための下限
+
 
 def to_float(value, default=None):
     try:
@@ -128,6 +134,24 @@ def build_dataset():
     return X, y, len(race_keys_seen)
 
 
+def compute_scaling(X, n_features):
+    """FEATURE_COLUMNS(one-hot除く先頭n_features列)それぞれの平均・標準偏差を返す。"""
+    means = []
+    stds = []
+    for i in range(n_features):
+        col = [row[i] for row in X]
+        mean = statistics.fmean(col)
+        variance = statistics.pvariance(col, mean) if len(col) > 1 else 0.0
+        means.append(mean)
+        stds.append(max(variance ** 0.5, MIN_STD))
+    return means, stds
+
+
+def scale_row(row, means, stds, n_features):
+    scaled = [(row[i] - means[i]) / stds[i] for i in range(n_features)]
+    return scaled + row[n_features:]
+
+
 def main():
     ensure_dirs()
     X, y, n_races = build_dataset()
@@ -143,24 +167,28 @@ def main():
         print("[error] scikit-learn がインストールされていません。requirements.txt を確認してください。")
         return
 
+    n_features = len(FEATURE_COLUMNS)
+    means, stds = compute_scaling(X, n_features)
+    X_scaled = [scale_row(row, means, stds, n_features) for row in X]
+
     model = LogisticRegression(max_iter=1000)
-    model.fit(X, y)
+    model.fit(X_scaled, y)
 
     feature_names = FEATURE_COLUMNS + [f"boat_{b}" for b in BOAT_NUMBERS] + [f"stadium_{s}" for s in STADIUM_NUMBERS]
     coefficients = dict(zip(feature_names, model.coef_[0].tolist()))
 
     # predict.py が天候等の欠損時(朝8:15のprograms-onlyの予想時など)に0埋めせず
-    # この平均値で埋められるよう、学習に使った生の特徴量(one-hot除く)の平均を保存する。
-    feature_means = {
-        col: statistics.fmean(row[i] for row in X)
-        for i, col in enumerate(FEATURE_COLUMNS)
-    }
+    # この平均値で埋められるよう、学習に使った生の特徴量(one-hot除く)の平均・標準偏差を保存する。
+    # predict.py側もこの平均・標準偏差で同じz-score標準化をしてから係数を適用する。
+    feature_means = dict(zip(FEATURE_COLUMNS, means))
+    feature_stds = dict(zip(FEATURE_COLUMNS, stds))
 
     payload = {
         "intercept": model.intercept_[0],
         "coefficients": coefficients,
         "feature_columns": FEATURE_COLUMNS,
         "feature_means": feature_means,
+        "feature_stds": feature_stds,
         "boat_numbers": BOAT_NUMBERS,
         "stadium_numbers": STADIUM_NUMBERS,
         "training_races": n_races,

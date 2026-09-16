@@ -72,15 +72,21 @@ def score_with_model(row, model):
     天候特徴量は前日出走表(programs)の時点では存在しないため、rowに無い場合は
     0埋めではなく学習時の平均値(model["feature_means"])で埋める(model.jsonの
     無い旧モデルとの後方互換のため、無ければ0.0にフォールバック)。
+    学習時にbacktest.py同様のz-score標準化((値-平均)/標準偏差)を適用しているため、
+    ここでも同じ平均・標準偏差(model["feature_stds"])で標準化してから係数を掛ける
+    (feature_stdsが無い旧モデルとの後方互換のため、無ければ標準偏差1.0にフォールバック=無変換)。
     """
     coefficients = model["coefficients"]
     feature_means = model.get("feature_means", {})
+    feature_stds = model.get("feature_stds", {})
     score = model["intercept"]
     for col in model["feature_columns"]:
         value = to_float(row.get(col), default=None)
+        mean = feature_means.get(col, 0.0)
         if value is None:
-            value = feature_means.get(col, 0.0)
-        score += coefficients[col] * value
+            value = mean
+        std = feature_stds.get(col) or 1.0
+        score += coefficients[col] * ((value - mean) / std)
     boat_number = row.get("boat_number")
     for b in model["boat_numbers"]:
         if boat_number == b:
