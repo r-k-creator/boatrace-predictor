@@ -67,15 +67,28 @@ def load_model():
 
 
 def score_with_model(row, model):
-    """train_model.py が保存したロジスティック回帰の係数でスコア(0~1のsigmoid値)を計算する。"""
+    """train_model.py が保存したロジスティック回帰の係数でスコア(0~1のsigmoid値)を計算する。
+
+    天候特徴量は前日出走表(programs)の時点では存在しないため、rowに無い場合は
+    0埋めではなく学習時の平均値(model["feature_means"])で埋める(model.jsonの
+    無い旧モデルとの後方互換のため、無ければ0.0にフォールバック)。
+    """
     coefficients = model["coefficients"]
+    feature_means = model.get("feature_means", {})
     score = model["intercept"]
     for col in model["feature_columns"]:
-        score += coefficients[col] * to_float(row.get(col))
+        value = to_float(row.get(col), default=None)
+        if value is None:
+            value = feature_means.get(col, 0.0)
+        score += coefficients[col] * value
     boat_number = row.get("boat_number")
     for b in model["boat_numbers"]:
         if boat_number == b:
             score += coefficients[f"boat_{b}"]
+    stadium_number = row.get("stadium_number")
+    for s in model.get("stadium_numbers", []):
+        if stadium_number == s:
+            score += coefficients[f"stadium_{s}"]
     # sigmoid
     return 1 / (1 + math.exp(-score))
 
