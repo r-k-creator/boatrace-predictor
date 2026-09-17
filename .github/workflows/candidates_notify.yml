@@ -1,12 +1,16 @@
 name: Candidates notification email
 
-# candidates.json が更新されてpushされたら、その内容をメールで送る。
+# candidates.json が更新されてpushされたら、読みやすく整形した本文でメールを送る。
 # 使用前に、リポジトリの Settings > Secrets and variables > Actions で
 # 以下のSecretsを登録してください:
 #   GMAIL_USERNAME      … 送信元のGmailアドレス
 #   GMAIL_APP_PASSWORD  … Gmailのアプリパスワード(通常のログインパスワードではない。
 #                          2段階認証を有効にした上でGoogleアカウント設定から発行する)
 #   NOTIFY_EMAIL_TO     … 送信先メールアドレス(自分宛でも可)
+#
+# rank/budget/bets(scripts/generate_bets.py)はこのジョブの中だけで計算し、リポジトリには
+# コミットしない。このワークフロー自体がdata/candidates.jsonへのpushをトリガーにしているため、
+# ここでコミット・pushすると自分自身を再度トリガーしてしまい、メールが二重に送られる。
 
 on:
   push:
@@ -22,11 +26,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Compute today's date (JST)
         id: jst_date
         run: echo "date=$(TZ='Asia/Tokyo' date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
 
-      - name: Send candidates.json by email
+      - name: Generate bet suggestions (rank/budget/bets)
+        working-directory: scripts
+        run: python generate_bets.py
+
+      - name: Build readable email body
+        working-directory: scripts
+        run: python build_candidates_email.py
+
+      - name: Send candidates email
         uses: dawidd6/action-send-mail@v22
         with:
           server_address: smtp.gmail.com
@@ -36,4 +53,4 @@ jobs:
           subject: "【ボートレース予想】本日の参加候補レース (${{ steps.jst_date.outputs.date }})"
           to: ${{ secrets.NOTIFY_EMAIL_TO }}
           from: "boatrace-predictor <${{ secrets.GMAIL_USERNAME }}>"
-          body: file://data/candidates.json
+          body: file://candidates_email_body.txt
