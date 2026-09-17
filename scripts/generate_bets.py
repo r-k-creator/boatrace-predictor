@@ -29,12 +29,24 @@ predictions/{date}.csv の艇別勝率を各艇の「強さ」とみなし、Har
 
 【点数・買い目の種類】
 レース全体(6艇)の勝率分布のシャノンエントロピー(正規化)を「荒れ具合」の指標とし、
-拮抗しているほど点数を増やす(3〜10点、極端な混戦のみ最大15点まで拡張)。
-買い目の種類はrank(=1着候補の確信度)で変える: Sは1着がほぼ確定とみなし残る
-不確実性(2着)を2連単で、Aは着順まで狙えるとみなし3連単で、Bは着順を外すリスクが
-相対的に高いためbox(3連複)で拾う。いずれもレースごとのHarville確率上位N点を選ぶ。
-金額は各買い目の推定確率に比例して100円単位で配分する(最大剰余法で端数調整し、
-合計が予算とぴったり一致するようにする)。
+拮抗しているほど点数を増やす(3〜10点、極端な混戦のみ最大15点まで拡張)。この点数・
+予算を、rank別に以下のように複数の買い目種類へ配分する(S/Aは2種類の組み合わせ):
+    S: 2連単(手堅い) + 3連単(上振れ狙い)
+    A: 3連単(主軸) + 2連単または3連複(副。1着候補がSしきい値寄り[0.65以上]なら
+       さらに手堅い2連単を、B寄り[0.65未満]なら着順リスクを吸収するbox=3連複を選ぶ)
+    B: 3連複のみ(着順を外すリスクが相対的に高いため、変更なし)
+S/Aの配分比率(副の取り分)は拮抗度に応じて0.20〜0.60の範囲で連続的に決める
+(拮抗しているレースほど副の取り分を増やす)。点数・予算とも同じ比率で按分し、
+それぞれの種類の中でHarville確率上位N点を選ぶ。金額は各買い目の推定確率に比例して
+100円単位で配分する(最大剰余法で端数調整し、種類ごとの配分合計がその種類の予算と
+ぴったり一致するようにする。2種類の予算の合計は常にrank予算とぴったり一致する)。
+
+【reasonsの警告フラグによるランク調整】
+reasonsに「要注意」「留意点」「食い違」のいずれかを含む文がある場合(候補選定時に
+Routine自身が付けた注意喚起)、モデルの確率だけでは捉えきれないリスクとみなし、
+rankを1段階下げる(S→A、A→B、B→C。Cはこれ以上下げない)。この場合、実際に使う
+final rankは引き下げ後の値だが、引き下げ前のrank(rank_without_caution)と
+caution_flagged=trueも記録し、判断過程を追跡できるようにする。
 
 このスクリプトは data/candidates.json を読み込み、対応する日付の
 predictions/{date}.csv と突き合わせて rank/budget/bets を計算し、
@@ -63,6 +75,14 @@ RANK_THRESHOLDS = [
     ("C", 0.0),
 ]
 RANK_BUDGET = {"S": 5000, "A": 3000, "B": 2000, "C": 0}
+RANK_ORDER = ["S", "A", "B", "C"]
+
+# reasonsにこれらの語を含む文があれば、モデル確率だけでは拾えないリスクとみなし
+# rankを1段階下げる(実際に候補選定を行ったRoutineが付けた注意喚起を尊重するため)。
+CAUTION_KEYWORDS = ["要注意", "留意点", "食い違"]
+
+# Aランク帯の中で、副の買い目を2連単(Sより)にするかbox=3連複(Bより)にするかの境目。
+A_SECONDARY_SPLIT_PROBABILITY = 0.65
 
 BETTING_NOTE = (
     "この賭け方の提案(rank/budget/bets)は、モデルが推定した確率(Harvilleの公式による"
@@ -79,6 +99,16 @@ def rank_for_probability(p):
         if p >= threshold:
             return rank
     return "C"
+
+
+def has_caution_flag(reasons):
+    text = "".join(reasons or [])
+    return any(kw in text for kw in CAUTION_KEYWORDS)
+
+
+def downgrade_rank(rank):
+    idx = RANK_ORDER.index(rank)
+    return RANK_ORDER[min(idx + 1, len(RANK_ORDER) - 1)]
 
 
 def load_predictions_for_date(date_compact):
@@ -174,51 +204,80 @@ def allocate_budget(combos, budget):
     return [(floored[idx][0], floored[idx][1], bumped[idx] * 100) for idx in range(len(floored))]
 
 
+def combo_probs_for_type(bet_type, race_probs):
+    if bet_type == "2連単":
+        return exacta_ordered_combos(race_probs)
+    if bet_type == "3連単":
+        return trifecta_ordered_combos(race_probs)
+    return trifecta_boxed_combos(race_probs)  # "3連複"
+
+
+def bets_for_type(bet_type, race_probs, points, budget):
+    if points <= 0 or budget <= 0:
+        return []
+    combo_probs = combo_probs_for_type(bet_type, race_probs)
+    top_combos = sorted(combo_probs.items(), key=lambda x: -x[1])[:points]
+    allocated = allocate_budget(top_combos, budget)
+    return [
+        {"type": bet_type, "combination": label, "amount": amount, "estimated_probability": round(prob, 4)}
+        for label, prob, amount in allocated
+        if amount > 0
+    ]
+
+
+def build_bets(rank, race_probs, budget, p_top):
+    """rank(caution降格後の最終rank)に応じた買い目リストを組み立てる。"""
+    competitiveness = normalized_entropy(race_probs)
+    total_points = decide_point_count(competitiveness)
+
+    if rank == "B":
+        return bets_for_type("3連複", race_probs, total_points, budget)
+
+    if rank == "S":
+        primary_type, secondary_type = "2連単", "3連単"
+        # 拮抗しているほど上振れ狙い(3連単)の配分を増やす(0.25〜0.60)。
+        secondary_ratio = 0.25 + 0.35 * competitiveness
+    else:  # A
+        primary_type = "3連単"
+        # 1着候補がS寄り(確信度が高い)ならさらに手堅い2連単、B寄りならbox(3連複)。
+        secondary_type = "2連単" if p_top >= A_SECONDARY_SPLIT_PROBABILITY else "3連複"
+        secondary_ratio = 0.20 + 0.30 * competitiveness  # 0.20〜0.50
+
+    secondary_budget = round(budget * secondary_ratio / 100) * 100
+    primary_budget = budget - secondary_budget
+
+    secondary_points = max(1, min(total_points - 1, round(total_points * secondary_ratio)))
+    primary_points = total_points - secondary_points
+
+    bets = bets_for_type(primary_type, race_probs, primary_points, primary_budget)
+    bets += bets_for_type(secondary_type, race_probs, secondary_points, secondary_budget)
+    return bets
+
+
 def generate_for_candidate(candidate, race_probs):
     recommended_boat = str(candidate["recommended_boat"])
     p_top = candidate.get("predicted_probability")
     if p_top is None and race_probs:
         p_top = race_probs.get(recommended_boat)
+    p_top = p_top if p_top is not None else 0.0
 
-    rank = rank_for_probability(p_top if p_top is not None else 0.0)
-    budget = RANK_BUDGET[rank]
+    raw_rank = rank_for_probability(p_top)
+    caution = has_caution_flag(candidate.get("reasons"))
+    rank = downgrade_rank(raw_rank) if caution else raw_rank
 
     candidate["rank"] = rank
+    candidate["caution_flagged"] = caution
+    if caution:
+        candidate["rank_without_caution"] = raw_rank
+
+    budget = RANK_BUDGET[rank]
     candidate["budget"] = budget
 
     if rank == "C" or not race_probs or budget <= 0:
         candidate["bets"] = []
         return candidate
 
-    competitiveness = normalized_entropy(race_probs)
-    points = decide_point_count(competitiveness)
-    # 1着候補の確信度(=rank)で買い目の種類を変える。
-    # S: 1着はほぼ確定とみなし、残る不確実性(2着)を2連単で狙う。
-    # A: 着順まで的中させにいけるだけの確信度があるので3連単。
-    # B: 着順を外すリスクが相対的に高いので、box(3連複)で拾う。
-    if rank == "S":
-        bet_type = "2連単"
-        combo_probs = exacta_ordered_combos(race_probs)
-    elif rank == "A":
-        bet_type = "3連単"
-        combo_probs = trifecta_ordered_combos(race_probs)
-    else:  # B
-        bet_type = "3連複"
-        combo_probs = trifecta_boxed_combos(race_probs)
-
-    top_combos = sorted(combo_probs.items(), key=lambda x: -x[1])[:points]
-    allocated = allocate_budget(top_combos, budget)
-
-    candidate["bets"] = [
-        {
-            "type": bet_type,
-            "combination": label,
-            "amount": amount,
-            "estimated_probability": round(prob, 4),
-        }
-        for label, prob, amount in allocated
-        if amount > 0
-    ]
+    candidate["bets"] = build_bets(rank, race_probs, budget, p_top)
     return candidate
 
 

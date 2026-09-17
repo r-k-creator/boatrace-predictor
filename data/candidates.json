@@ -24,52 +24,54 @@
         "racer_overall_races": 322,
         "model_training_races": 76890
       },
-      "rank": "S",
-      "budget": 5000,
+      "rank": "A",
+      "budget": 3000,
       "bets": [
+        {
+          "type": "3連単",
+          "combination": "1-5-3",
+          "amount": 400,
+          "estimated_probability": 0.0896
+        },
+        {
+          "type": "3連単",
+          "combination": "1-3-5",
+          "amount": 400,
+          "estimated_probability": 0.0892
+        },
+        {
+          "type": "3連単",
+          "combination": "1-5-2",
+          "amount": 400,
+          "estimated_probability": 0.0887
+        },
+        {
+          "type": "3連単",
+          "combination": "1-2-5",
+          "amount": 400,
+          "estimated_probability": 0.0879
+        },
+        {
+          "type": "3連単",
+          "combination": "1-3-2",
+          "amount": 300,
+          "estimated_probability": 0.0873
+        },
         {
           "type": "2連単",
           "combination": "1-5",
-          "amount": 1200,
+          "amount": 600,
           "estimated_probability": 0.2203
         },
         {
           "type": "2連単",
           "combination": "1-3",
-          "amount": 1200,
-          "estimated_probability": 0.2179
-        },
-        {
-          "type": "2連単",
-          "combination": "1-2",
-          "amount": 1200,
-          "estimated_probability": 0.2157
-        },
-        {
-          "type": "2連単",
-          "combination": "1-4",
           "amount": 500,
-          "estimated_probability": 0.0838
-        },
-        {
-          "type": "2連単",
-          "combination": "5-1",
-          "amount": 300,
-          "estimated_probability": 0.0578
-        },
-        {
-          "type": "2連単",
-          "combination": "3-1",
-          "amount": 300,
-          "estimated_probability": 0.0571
-        },
-        {
-          "type": "2連単",
-          "combination": "2-1",
-          "amount": 300,
-          "estimated_probability": 0.0565
+          "estimated_probability": 0.2179
         }
-      ]
+      ],
+      "caution_flagged": true,
+      "rank_without_caution": "S"
     },
     {
       "stadium_number": 8,
@@ -99,46 +101,47 @@
         {
           "type": "2連単",
           "combination": "1-3",
-          "amount": 1800,
+          "amount": 1300,
           "estimated_probability": 0.332
         },
         {
           "type": "2連単",
           "combination": "1-2",
-          "amount": 1300,
+          "amount": 900,
           "estimated_probability": 0.237
         },
         {
           "type": "2連単",
           "combination": "3-1",
-          "amount": 500,
+          "amount": 400,
           "estimated_probability": 0.0978
         },
         {
           "type": "2連単",
           "combination": "1-5",
-          "amount": 500,
+          "amount": 300,
           "estimated_probability": 0.0799
         },
         {
-          "type": "2連単",
-          "combination": "1-4",
-          "amount": 400,
-          "estimated_probability": 0.0697
+          "type": "3連単",
+          "combination": "1-3-2",
+          "amount": 1000,
+          "estimated_probability": 0.1928
         },
         {
-          "type": "2連単",
-          "combination": "2-1",
-          "amount": 400,
-          "estimated_probability": 0.0672
+          "type": "3連単",
+          "combination": "1-2-3",
+          "amount": 800,
+          "estimated_probability": 0.1564
         },
         {
-          "type": "2連単",
-          "combination": "5-1",
-          "amount": 100,
-          "estimated_probability": 0.0214
+          "type": "3連単",
+          "combination": "1-3-5",
+          "amount": 300,
+          "estimated_probability": 0.0651
         }
-      ]
+      ],
+      "caution_flagged": false
     },
     {
       "stadium_number": 9,
@@ -168,46 +171,47 @@
         {
           "type": "2連単",
           "combination": "1-3",
-          "amount": 1300,
+          "amount": 900,
           "estimated_probability": 0.2091
         },
         {
           "type": "2連単",
           "combination": "1-2",
-          "amount": 1100,
+          "amount": 700,
           "estimated_probability": 0.1769
         },
         {
           "type": "2連単",
           "combination": "1-4",
-          "amount": 1000,
+          "amount": 700,
           "estimated_probability": 0.1715
         },
         {
           "type": "2連単",
           "combination": "1-5",
-          "amount": 600,
+          "amount": 400,
           "estimated_probability": 0.0907
         },
         {
-          "type": "2連単",
-          "combination": "3-1",
-          "amount": 400,
-          "estimated_probability": 0.0682
+          "type": "3連単",
+          "combination": "1-3-2",
+          "amount": 800,
+          "estimated_probability": 0.075
         },
         {
-          "type": "2連単",
-          "combination": "2-1",
-          "amount": 300,
-          "estimated_probability": 0.0569
+          "type": "3連単",
+          "combination": "1-3-4",
+          "amount": 800,
+          "estimated_probability": 0.0727
         },
         {
-          "type": "2連単",
-          "combination": "4-1",
-          "amount": 300,
-          "estimated_probability": 0.055
+          "type": "3連単",
+          "combination": "1-2-3",
+          "amount": 700,
+          "estimated_probability": 0.0704
         }
-      ]
+      ],
+      "caution_flagged": false
     },
     {
       "stadium_number": 8,
@@ -231,52 +235,54 @@
         "racer_overall_races": 253,
         "model_training_races": 76890
       },
-      "rank": "S",
-      "budget": 5000,
+      "rank": "A",
+      "budget": 3000,
       "bets": [
+        {
+          "type": "3連単",
+          "combination": "1-3-4",
+          "amount": 600,
+          "estimated_probability": 0.1124
+        },
+        {
+          "type": "3連単",
+          "combination": "1-4-3",
+          "amount": 500,
+          "estimated_probability": 0.1024
+        },
+        {
+          "type": "3連単",
+          "combination": "1-3-2",
+          "amount": 400,
+          "estimated_probability": 0.0884
+        },
+        {
+          "type": "3連単",
+          "combination": "1-2-3",
+          "amount": 400,
+          "estimated_probability": 0.074
+        },
         {
           "type": "2連単",
           "combination": "1-3",
-          "amount": 1400,
+          "amount": 400,
           "estimated_probability": 0.2501
         },
         {
           "type": "2連単",
           "combination": "1-4",
-          "amount": 1200,
+          "amount": 400,
           "estimated_probability": 0.2053
         },
         {
           "type": "2連単",
           "combination": "1-2",
-          "amount": 900,
+          "amount": 300,
           "estimated_probability": 0.1614
-        },
-        {
-          "type": "2連単",
-          "combination": "3-1",
-          "amount": 500,
-          "estimated_probability": 0.0819
-        },
-        {
-          "type": "2連単",
-          "combination": "4-1",
-          "amount": 400,
-          "estimated_probability": 0.0658
-        },
-        {
-          "type": "2連単",
-          "combination": "1-6",
-          "amount": 300,
-          "estimated_probability": 0.0602
-        },
-        {
-          "type": "2連単",
-          "combination": "2-1",
-          "amount": 300,
-          "estimated_probability": 0.0507
         }
-      ]
+      ],
+      "caution_flagged": true,
+      "rank_without_caution": "S"
     },
     {
       "stadium_number": 16,
@@ -306,46 +312,47 @@
         {
           "type": "2連単",
           "combination": "1-3",
-          "amount": 1400,
+          "amount": 1000,
           "estimated_probability": 0.2357
         },
         {
           "type": "2連単",
           "combination": "1-2",
-          "amount": 1300,
+          "amount": 900,
           "estimated_probability": 0.2256
         },
         {
           "type": "2連単",
           "combination": "1-4",
-          "amount": 800,
+          "amount": 500,
           "estimated_probability": 0.1338
         },
         {
           "type": "2連単",
           "combination": "3-1",
-          "amount": 500,
+          "amount": 300,
           "estimated_probability": 0.0781
         },
         {
-          "type": "2連単",
-          "combination": "2-1",
-          "amount": 400,
-          "estimated_probability": 0.0744
+          "type": "3連単",
+          "combination": "1-3-2",
+          "amount": 900,
+          "estimated_probability": 0.1141
         },
         {
-          "type": "2連単",
-          "combination": "1-6",
-          "amount": 300,
-          "estimated_probability": 0.0588
+          "type": "3連単",
+          "combination": "1-2-3",
+          "amount": 900,
+          "estimated_probability": 0.1117
         },
         {
-          "type": "2連単",
-          "combination": "1-5",
-          "amount": 300,
-          "estimated_probability": 0.0475
+          "type": "3連単",
+          "combination": "1-3-4",
+          "amount": 500,
+          "estimated_probability": 0.0677
         }
-      ]
+      ],
+      "caution_flagged": false
     },
     {
       "stadium_number": 8,
@@ -375,46 +382,47 @@
         {
           "type": "2連単",
           "combination": "1-2",
-          "amount": 1700,
+          "amount": 1200,
           "estimated_probability": 0.286
         },
         {
           "type": "2連単",
           "combination": "1-4",
-          "amount": 1000,
+          "amount": 700,
           "estimated_probability": 0.17
         },
         {
           "type": "2連単",
           "combination": "1-6",
-          "amount": 800,
+          "amount": 500,
           "estimated_probability": 0.1344
         },
         {
           "type": "2連単",
           "combination": "2-1",
-          "amount": 500,
+          "amount": 400,
           "estimated_probability": 0.0919
         },
         {
-          "type": "2連単",
-          "combination": "1-3",
-          "amount": 500,
-          "estimated_probability": 0.0829
+          "type": "3連単",
+          "combination": "1-2-4",
+          "amount": 800,
+          "estimated_probability": 0.1133
         },
         {
-          "type": "2連単",
-          "combination": "4-1",
-          "amount": 300,
-          "estimated_probability": 0.0519
+          "type": "3連単",
+          "combination": "1-2-6",
+          "amount": 700,
+          "estimated_probability": 0.0895
         },
         {
-          "type": "2連単",
-          "combination": "1-5",
-          "amount": 200,
-          "estimated_probability": 0.0419
+          "type": "3連単",
+          "combination": "1-4-2",
+          "amount": 700,
+          "estimated_probability": 0.0892
         }
-      ]
+      ],
+      "caution_flagged": false
     },
     {
       "stadium_number": 11,
@@ -444,7 +452,7 @@
         {
           "type": "3連単",
           "combination": "1-5-4",
-          "amount": 600,
+          "amount": 500,
           "estimated_probability": 0.095
         },
         {
@@ -466,24 +474,25 @@
           "estimated_probability": 0.0687
         },
         {
-          "type": "3連単",
-          "combination": "1-5-3",
-          "amount": 400,
-          "estimated_probability": 0.0567
+          "type": "2連単",
+          "combination": "1-5",
+          "amount": 500,
+          "estimated_probability": 0.2384
         },
         {
-          "type": "3連単",
-          "combination": "1-4-2",
+          "type": "2連単",
+          "combination": "1-4",
           "amount": 300,
-          "estimated_probability": 0.0553
+          "estimated_probability": 0.1824
         },
         {
-          "type": "3連単",
-          "combination": "1-2-4",
+          "type": "2連単",
+          "combination": "1-2",
           "amount": 300,
-          "estimated_probability": 0.0526
+          "estimated_probability": 0.1558
         }
-      ]
+      ],
+      "caution_flagged": false
     },
     {
       "stadium_number": 23,
@@ -507,52 +516,54 @@
         "racer_overall_races": 359,
         "model_training_races": 76890
       },
-      "rank": "S",
-      "budget": 5000,
+      "rank": "A",
+      "budget": 3000,
       "bets": [
+        {
+          "type": "3連単",
+          "combination": "1-2-4",
+          "amount": 700,
+          "estimated_probability": 0.1495
+        },
+        {
+          "type": "3連単",
+          "combination": "1-2-3",
+          "amount": 500,
+          "estimated_probability": 0.1236
+        },
+        {
+          "type": "3連単",
+          "combination": "1-4-2",
+          "amount": 400,
+          "estimated_probability": 0.0973
+        },
+        {
+          "type": "3連単",
+          "combination": "1-3-2",
+          "amount": 300,
+          "estimated_probability": 0.0768
+        },
         {
           "type": "2連単",
           "combination": "1-2",
-          "amount": 2000,
+          "amount": 600,
           "estimated_probability": 0.3551
         },
         {
           "type": "2連単",
           "combination": "1-4",
-          "amount": 900,
+          "amount": 300,
           "estimated_probability": 0.1562
         },
         {
           "type": "2連単",
           "combination": "1-3",
-          "amount": 700,
-          "estimated_probability": 0.1292
-        },
-        {
-          "type": "2連単",
-          "combination": "2-1",
-          "amount": 600,
-          "estimated_probability": 0.1123
-        },
-        {
-          "type": "2連単",
-          "combination": "1-6",
-          "amount": 300,
-          "estimated_probability": 0.0517
-        },
-        {
-          "type": "2連単",
-          "combination": "4-1",
-          "amount": 300,
-          "estimated_probability": 0.0455
-        },
-        {
-          "type": "2連単",
-          "combination": "3-1",
           "amount": 200,
-          "estimated_probability": 0.0372
+          "estimated_probability": 0.1292
         }
-      ]
+      ],
+      "caution_flagged": true,
+      "rank_without_caution": "S"
     }
   ],
   "betting_note": "この賭け方の提案(rank/budget/bets)は、モデルが推定した確率(Harvilleの公式による組み合わせ確率の近似を含む)のみに基づいており、実際のオッズ(市場の織り込み)は考慮していません。「当たりやすさ」の予想であって「儲かるかどうか(期待値がプラスか)」の保証ではありません。参加を決めたレースは、bets内の買い目(例: 「3連単 1-2-3」)のオッズをテレボート等で確認し、estimated_probabilityと見比べて期待値がプラスかどうかを最終的に人が判断してください。"
