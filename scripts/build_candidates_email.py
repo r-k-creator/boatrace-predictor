@@ -10,8 +10,9 @@ reasonsは全文を並べず、確率差の行(reasons[0]相当)はpredictions/{
 を含まないものを優先して2〜3行、各行は最初の句読点/開き括弧までで短縮する(本当の意味の
 要約ではなく機械的な短縮。より自然な要約が必要なら将来LLM呼び出しの導入を検討)。
 
-betsは種類ごとにグループ化し、種類あたり最大2点(2種類のときは計4点、1種類なら4点)を
-表示、残りは「他n点、計○円」でまとめる(○円はそのレースの買い目合計=budgetと一致)。
+betsは種類ごとにグループ化した上で全点表示する(以前は種類あたり最大2点=計4点までに
+絞り「他n点」でまとめていたが、2026-09-17に全点表示へ変更。点数はレースによって6〜14点
+まで幅があるため、その分メール本文は長くなる)。
 
 使い方:
     python scripts/build_candidates_email.py
@@ -43,7 +44,6 @@ CAUTION_CAPTIONS = {
 }
 
 SEPARATOR = "━" * 20
-MAX_BETS_SHOWN = 4
 
 FOOTER_NOTE = (
     "※この予想はオッズを使わず、過去データから推定した『当たりやすさ』に基づく"
@@ -114,7 +114,7 @@ def format_bet_line(bet):
     return f"{bet['type']} {bet['combination']:<7}{amount_str:>6}(推定確率{prob_str})"
 
 
-def format_bets(bets, race_budget):
+def format_bets(bets):
     if not bets:
         return ["【買い目】", "  (ランクCのため賭け目の提案はありません。参考情報としてご覧ください)"]
 
@@ -124,15 +124,9 @@ def format_bets(bets, race_budget):
         if b["type"] not in type_order:
             type_order.append(b["type"])
 
-    per_type = max(1, MAX_BETS_SHOWN // len(type_order))
-    shown = []
+    lines = [f"【買い目】(全{len(bets)}点)"]
     for t in type_order:
-        shown.extend(by_type[t][:per_type])
-
-    lines = [f"【買い目】(全{len(bets)}点)"] + [format_bet_line(b) for b in shown]
-    rest = len(bets) - len(shown)
-    if rest > 0:
-        lines.append(f"  (他{rest}点、計{race_budget:,}円)")
+        lines.extend(format_bet_line(b) for b in by_type[t])
     return lines
 
 
@@ -162,7 +156,7 @@ def format_candidate_block(candidate, program_by_race, predictions_by_race):
     lines.append("")
     lines.extend(format_bullets(candidate.get("reasons") or []))
     lines.append("")
-    lines.extend(format_bets(candidate.get("bets") or [], budget))
+    lines.extend(format_bets(candidate.get("bets") or []))
     lines.append("")
     return "\n".join(lines)
 
