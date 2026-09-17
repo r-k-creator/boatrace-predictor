@@ -129,7 +129,7 @@ def format_bets(bets, race_budget):
     for t in type_order:
         shown.extend(by_type[t][:per_type])
 
-    lines = ["【買い目】"] + [format_bet_line(b) for b in shown]
+    lines = [f"【買い目】(全{len(bets)}点)"] + [format_bet_line(b) for b in shown]
     rest = len(bets) - len(shown)
     if rest > 0:
         lines.append(f"  (他{rest}点、計{race_budget:,}円)")

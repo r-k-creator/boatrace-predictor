@@ -32,11 +32,14 @@ predictions/{date}.csv の艇別勝率を各艇の「強さ」とみなし、Har
 (betting_noteとしてdata/candidates.json自体にも明記する)。
 
 【点数・買い目の種類】
-レース全体(6艇)の勝率分布のシャノンエントロピー(正規化)を「荒れ具合」の指標とする。
+「荒れ具合」の指標には、1着候補を除いた残り5艇の相対分布のエントロピー
+(residual_entropy、rescale_competitivenessで実測レンジを0〜1に正規化したもの)を使う
+(6艇全体のエントロピーをそのまま使うと、rankが上がるほど値の範囲自体が下に偏り、
+同じ点数に丸められがちだったため。詳細はresidual_entropyのdocstring参照)。
 S/A/Bは基本6〜9点(拮抗しているほど増やす。極端な混戦のみ最大15点まで拡張。
 下限は3点ではなく6点=SS以外の候補は最低でも6点は確保する)。SSは「点数を絞った、
-より攻めた買い目」という方針のため別枠で3〜5点(同じくエントロピーで3〜5の範囲で
-連続的に決める)とし、予算はSと同じ5000円のまま(1点あたりの金額はSより大きくなる)。
+より攻めた買い目」という方針のため別枠で3〜5点(同じ指標で3〜5の範囲で連続的に決める)
+とし、予算はSと同じ5000円のまま(1点あたりの金額はSより大きくなる)。
 この点数・予算を、rank別に以下のように複数の買い目種類へ配分する(SS/S/Aは2種類の
 組み合わせ):
     SS/S: 2連単(手堅い) + 3連単(上振れ狙い)
@@ -175,14 +178,56 @@ def exacta_ordered_combos(probs):
     return {f"{i}-{j}": harville_exacta(probs, i, j) for i, j in itertools.permutations(boats, 2)}
 
 
-def normalized_entropy(probs):
-    """0(1艇が独走)〜1(完全に拮抗)。6艇ならlog(6)で正規化。"""
-    values = [p for p in probs.values() if p > 0]
-    if not values:
+def residual_entropy(probs):
+    """1着候補(最大確率の艇)を除いた残り5艇を確率の合計1に正規化し直した上でのエントロピー
+    (0〜1、6艇ならlog(5)で正規化)。「2着以下がどれだけ拮抗しているか」を、1着候補自身の
+    確信度の高さに左右されずに測る指標。
+
+    2026-09-17、実データで判明: 6艇全体のシャノンエントロピーをそのまま使うと、1着候補の
+    確率が高いほど理論上の最大エントロピーも下がるため、rankが上がるほど(=1着候補の確信度が
+    高いほど)実際に観測される値の範囲が下側に狭くシフトしてしまい、S/A帯のレースが
+    ことごとく同じ点数(8点)に丸められる問題があった(predictions/20260916・20260917の
+    2日分・計207レースで確認: 全体エントロピーの中央値はB帯0.732→A帯0.650→S帯0.529と
+    rankが上がるほど系統的に下がっていた)。残り5艇だけの相対分布で測ることで、
+    同じ2日分のデータでは中央値がB帯0.878/A帯0.886/S帯0.877とrankによらずほぼ一定になる
+    ことを確認済み。
+    """
+    if len(probs) < 2:
         return 0.0
-    h = -sum(p * math.log(p) for p in values)
-    h_max = math.log(len(values))
+    boat_top = max(probs, key=probs.get)
+    rest = {k: v for k, v in probs.items() if k != boat_top}
+    rest_total = sum(rest.values())
+    if rest_total <= 0:
+        return 0.0
+    rest_norm = {k: v / rest_total for k, v in rest.items()}
+    h = -sum(p * math.log(p) for p in rest_norm.values() if p > 0)
+    h_max = math.log(len(rest_norm))
     return h / h_max if h_max > 0 else 0.0
+
+
+# residual_entropy()の実測レンジ(rank帯ごと。2026-09-16/17の2日分のpredictions実データ、
+# 計207レースから算出)。rank帯が上がるほど残り5艇の拮抗度も系統的にわずかに上振れ・
+# 狭くなる傾向がある(B: n=115 [0.547,0.988] → A: n=79 [0.689,0.981] → S: n=13
+# [0.796,0.941])ため、全rank共通の1つの範囲で正規化すると帯内の実際の値の広がりを
+# 使い切れず同じ点数に丸められがちになる(2026-09-17、共通レンジ版の暫定実装で実際に
+# 確認: S帯13レース中12件が8点に丸められていた)。rank帯ごとに別の範囲で正規化することで
+# 解消する。SS帯は2日分のデータに該当レースが無かったため、暫定的にS帯と同じ範囲を使う
+# (S帯すらn=13と薄いサンプルなので、いずれも仮の値。データが増えたら見直すべき。
+# [[project-boatrace-predictor-stage2-plan]]参照)。
+RESIDUAL_ENTROPY_RANGE_BY_RANK = {
+    "SS": (0.79, 0.94),  # 実データ無し。暫定的にS帯と同じ範囲を流用
+    "S": (0.79, 0.94),
+    "A": (0.69, 0.98),
+    "B": (0.55, 0.99),
+}
+
+
+def rescale_competitiveness(e, rank):
+    lo, hi = RESIDUAL_ENTROPY_RANGE_BY_RANK.get(rank, (0.0, 1.0))
+    span = hi - lo
+    if span <= 0:
+        return e
+    return max(0.0, min(1.0, (e - lo) / span))
 
 
 def decide_point_count(competitiveness):
@@ -245,7 +290,7 @@ def bets_for_type(bet_type, race_probs, points, budget):
 
 def build_bets(rank, race_probs, budget, p_top):
     """rank(caution降格後の最終rank)に応じた買い目リストを組み立てる。"""
-    competitiveness = normalized_entropy(race_probs)
+    competitiveness = rescale_competitiveness(residual_entropy(race_probs), rank)
 
     if rank == "B":
         total_points = decide_point_count(competitiveness)
