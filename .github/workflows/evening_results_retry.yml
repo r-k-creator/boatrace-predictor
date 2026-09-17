@@ -42,6 +42,10 @@ jobs:
         working-directory: scripts
         run: python train_model.py
 
+      - name: Evaluate today's candidates (的中率・回収率の集計)
+        working-directory: scripts
+        run: python evaluate_candidates.py
+
       - name: Commit and push updated data
         run: |
           git config user.name "github-actions[bot]"
@@ -53,3 +57,16 @@ jobs:
           else
             echo "No changes to commit"
           fi
+
+      - name: Send candidate evaluation email
+        if: hashFiles('candidates_evaluation_report.txt') != ''
+        uses: dawidd6/action-send-mail@v22
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "【ボートレース予想】候補レース振り返り"
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: "boatrace-predictor <${{ secrets.GMAIL_USERNAME }}>"
+          body: file://candidates_evaluation_report.txt

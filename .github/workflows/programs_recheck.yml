@@ -1,0 +1,52 @@
+name: Programs recheck (直前の出走表差異チェック)
+
+# 8:00 JSTの朝の出走表取得(morning_program.yml)から時間が経つと、13:00以降に
+# 発走するレースで選手変更(乗り替わり)が発生することがある。13:00 JSTに
+# fetch_program.pyと同じ方法でもう一度出走表を取得し、朝のデータ
+# (data/programs/{当日}.csv、こちらは上書きしない)と主要項目(選手番号・選手名)を
+# 突き合わせて、差異があればメールで通知する。差異が無ければ何も送らない。
+
+on:
+  schedule:
+    # 毎日 04:00 UTC = 13:00 JST に実行
+    - cron: "0 4 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  recheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compute today's date (JST)
+        id: jst_date
+        run: echo "date=$(TZ='Asia/Tokyo' date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Recheck today's program for 13:00+ races
+        working-directory: scripts
+        run: python recheck_program.py
+
+      - name: Send diff notification email
+        if: hashFiles('programs_recheck_report.txt') != ''
+        uses: dawidd6/action-send-mail@v22
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "【ボートレース予想】出走表 直前差異チェック (${{ steps.jst_date.outputs.date }})"
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: "boatrace-predictor <${{ secrets.GMAIL_USERNAME }}>"
+          body: file://programs_recheck_report.txt
