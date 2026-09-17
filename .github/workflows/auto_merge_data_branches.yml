@@ -1,0 +1,160 @@
+name: Auto-merge claude/* data-only branches
+
+# Coworkの候補選定Routineが作成する claude/* ブランチのうち、変更ファイルが
+# 既知の自動生成データファイル(下記ALLOWED_REGEX)のみのものを、レビュー無しで
+# mainへfast-forwardする。候補データ(candidates.json・統計軸・model.json等)は
+# 日々更新される性質のもので、コード変更のような毎回のPRレビューは自動化の目的に
+# 反するため。
+#
+# 安全のためのfail-closed設計:
+#   - 変更ファイルはALLOWED_REGEXに完全一致するものだけを許可。1つでも外れたら不許可。
+#   - 対象コミットのauthor/committerが全て Claude <noreply@anthropic.com> であることを確認。
+#     (人間が誤って/意図的に claude/* という名前でブランチを作ってもすり抜けられない)
+#   - mainへの反映は force無しの git push のみ。fast-forwardできなければ何もしない
+#     (mainの既存履歴が書き換わることは構造的にあり得ない)。
+#   - 条件を満たさない場合(ホワイトリスト外・author不一致・fast-forward不可)は、
+#     ジョブを失敗させて通知が飛ぶようにしつつ、そのブランチからmainへのPRを自動で
+#     オープンし、従来通りの手動レビューフローにフォールバックする。
+
+on:
+  push:
+    branches:
+      - "claude/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure origin/main ref is available
+        run: git fetch origin main:refs/remotes/origin/main
+
+      - name: Compute merge-base, changed files, commit list
+        id: diff
+        run: |
+          set -eu
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          HEAD_SHA="${GITHUB_SHA}"
+          MAIN_SHA="$(git rev-parse origin/main)"
+          MERGE_BASE="$(git merge-base origin/main "$HEAD_SHA")"
+
+          echo "branch=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "main_sha=$MAIN_SHA" >> "$GITHUB_OUTPUT"
+          echo "merge_base=$MERGE_BASE" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Auto-merge check: $BRANCH_NAME -> main"
+            echo "- head: $HEAD_SHA"
+            echo "- main: $MAIN_SHA"
+            echo "- merge-base: $MERGE_BASE"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$MERGE_BASE" = "$HEAD_SHA" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "mainに対して新しいコミットがないためスキップします"
+            echo "(新規コミットなし。スキップ)" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+          echo "--- commits ($MERGE_BASE..$HEAD_SHA) ---"
+          git log --format='%H %ae %ce %s' "$MERGE_BASE..$HEAD_SHA" | tee /tmp/commits.txt
+          {
+            echo ""
+            echo "### Commits"
+            echo '```'
+            cat /tmp/commits.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "--- changed files ($MERGE_BASE..$HEAD_SHA) ---"
+          git diff --no-renames --name-only "$MERGE_BASE" "$HEAD_SHA" | tee /tmp/changed_files.txt
+          {
+            echo ""
+            echo "### Changed files"
+            echo '```'
+            cat /tmp/changed_files.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check changed files are whitelisted
+        id: scope_check
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          set -eu
+          # 既知の自動生成データファイルのみ許可(fail-closed: 1つでも外れたら不許可)
+          ALLOWED_REGEX='^(data/candidates\.json|data/stats/.*|data/backtest_.*)$'
+          DISALLOWED="$(grep -Ev "$ALLOWED_REGEX" /tmp/changed_files.txt || true)"
+
+          if [ -z "$(cat /tmp/changed_files.txt)" ]; then
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::error::差分ファイルが空です(diffの取得に失敗した可能性があります)"
+          elif [ -n "$DISALLOWED" ]; then
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::error::ホワイトリスト外のファイルが含まれているため自動マージを中止します:"
+            echo "$DISALLOWED" | while IFS= read -r f; do echo "::error::  $f"; done
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+            echo "OK: 全ての変更ファイルがホワイトリスト内です"
+          fi
+
+      - name: Check commit authors/committers
+        id: author_check
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          set -eu
+          EXPECTED="noreply@anthropic.com"
+          BAD="$(git log --format='%ae %ce' "${{ steps.diff.outputs.merge_base }}..${{ steps.diff.outputs.head_sha }}" \
+            | awk -v e="$EXPECTED" '$1 != e || $2 != e {print}')"
+
+          if [ -n "$BAD" ]; then
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::error::author/committerが ${EXPECTED} ではないコミットが含まれているため自動マージを中止します:"
+            echo "$BAD"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+            echo "OK: 全コミットのauthor/committerが ${EXPECTED} です"
+          fi
+
+      - name: Fast-forward push to main
+        id: push
+        if: steps.diff.outputs.skip != 'true' && steps.scope_check.outputs.ok == 'true' && steps.author_check.outputs.ok == 'true'
+        run: |
+          set -eu
+          if git push origin "${{ steps.diff.outputs.head_sha }}:refs/heads/main"; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+            echo "OK: mainへfast-forwardしました(${{ steps.diff.outputs.merge_base }} -> ${{ steps.diff.outputs.head_sha }})"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::error::mainへのpushに失敗しました(fast-forward不可。mainが分岐している可能性があります)"
+          fi
+
+      - name: Open fallback PR for manual review
+        if: steps.diff.outputs.skip != 'true' && steps.push.outputs.ok != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          BRANCH_NAME="${{ steps.diff.outputs.branch }}"
+          EXISTING="$(gh pr list --base main --head "$BRANCH_NAME" --state open --json number --jq 'length')"
+          if [ "$EXISTING" -gt 0 ]; then
+            echo "既にオープン中のPRがあるため作成をスキップします"
+          else
+            BODY=$'自動fast-forwardマージの条件(変更ファイルのホワイトリスト / commitのauthor-committer / fast-forward可否)のいずれかを満たさなかったため、手動レビュー用にPRを自動作成しました。\n詳細はこのブランチへのpushをトリガーした "Auto-merge claude/* data-only branches" ワークフローの実行ログ(Summary)を確認してください。'
+            gh pr create --base main --head "$BRANCH_NAME" --title "[auto-merge見送り] $BRANCH_NAME" --body "$BODY"
+          fi
+
+      - name: Fail job if not merged (so the standard failure notification fires)
+        if: steps.diff.outputs.skip != 'true' && steps.push.outputs.ok != 'true'
+        run: |
+          echo "::error::mainへの自動マージ条件を満たさなかったため、このジョブを失敗として扱います。フォールバックPRを確認してください。"
+          exit 1
