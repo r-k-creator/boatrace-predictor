@@ -1,164 +1,188 @@
 {
-  "date": "2026-09-16",
-  "generated_at": "2026-09-16T12:59:07Z",
+  "date": "2026-09-17",
+  "generated_at": "2026-09-16T23:23:56Z",
   "candidates": [
     {
-      "stadium_number": 8,
+      "stadium_number": 14,
       "race_number": 1,
       "recommended_boat": 1,
-      "predicted_probability": 0.7391,
+      "predicted_probability": 0.7563,
       "reasons": [
-        "モデル予想確率73.9%・2位(12.5%)との差+61.4ptで、本日の一般戦の中でも特に確信度が高い一戦",
-        "常滑はコース1(イン)の総合勝率58.2%・イン逃げ率55.6%(過去3,493レース)で、全国平均のコース1勝率54.8%より有意に高い『イン戦が決まりやすい』水面",
-        "モーター2連率34.1%は同帯(30〜35%)の通算勝率22.2%(63レース)と平均的水準。当地1コースでの実績は4走3勝(サンプルが少なく参考値)",
-        "通算勝利の43.6%(55勝中24勝)が逃げによるもので、イン逃げ型の勝ちパターンを持つ選手"
+        "モデル予想確率75.6%・2位(7.1%)との差+68.5ptで本日全レース中最高の確信度",
+        "【要注意】鳴門はコース1勝率48.7%・イン逃げ率46.9%(過去2,971レース)と全国平均54.8%より-6.1pt低い『イン戦が決まりにくい』水面で、モデルの確信度の高さと当地傾向がやや食い違っている",
+        "選手自身は通算勝利(81勝)の64.2%が逃げによるもので、イン逃げ型としての実力は高い。モーター2連率38.27%(35〜40%帯、同帯通算勝率27.3%/88レース)も高水準",
+        "ただし当地1コースでの実績データが無く(初出走または蓄積不足)、水面傾向との整合性は未検証。全国勝率6.44・通算勝率25.2%(322走81勝)自体は平均以上だが、他候補より慎重な資金配分を推奨"
+      ],
+      "sample_sizes": {
+        "venue_course_races": 2971,
+        "racer_venue_course_races": 0,
+        "racer_venue_course_low_sample": true,
+        "racer_motor_band_races": 88,
+        "racer_motor_band_low_sample": false,
+        "racer_kimarite_races": 81,
+        "racer_kimarite_low_sample": false,
+        "racer_overall_races": 322,
+        "model_training_races": 76890
+      }
+    },
+    {
+      "stadium_number": 8,
+      "race_number": 2,
+      "recommended_boat": 1,
+      "predicted_probability": 0.7399,
+      "reasons": [
+        "モデル予想確率74.0%・2位(11.7%)との差+62.3pt",
+        "常滑はコース1勝率58.2%・イン逃げ率55.6%(過去3,493レース)で全国平均より+3.4pt高く、イン戦が決まりやすい水面",
+        "通算勝利(41勝)の56.1%が逃げによるものでイン逃げ型。当地1コースの実績は4走3勝(75.0%)とサンプルは少ないが好成績(参考程度)",
+        "一方でモーター2連率35.02%(35〜40%帯)の帯別通算勝率は13.3%(60レース)と低めで、モーター面はやや割引材料。選手自身の全国勝率も4.72・通算勝率15.1%(272走41勝)と高くはなく、水面とイン逃げ適性による本命と見るのが妥当"
       ],
       "sample_sizes": {
         "venue_course_races": 3493,
         "racer_venue_course_races": 4,
         "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 63,
-        "racer_overall_races": 290,
-        "model_training_races": 76890
-      }
-    },
-    {
-      "stadium_number": 22,
-      "race_number": 1,
-      "recommended_boat": 1,
-      "predicted_probability": 0.7529,
-      "reasons": [
-        "モデル予想確率75.3%・2位(8.6%)との差+66.7ptで本日最大級の確信度",
-        "福岡もコース1勝率57.6%・イン逃げ率54.3%(過去3,137レース)と全国平均より高く、イン戦有利な水面",
-        "選手の全国勝率7.25・通算勝率27.8%(414走115勝)は安定して高い数字。決まり手も勝利の52.2%が逃げ",
-        "一方でモーター2連率は22.1%とやや低め(<30%帯、同帯通算勝率21.2%/137レース)で、モーター面はやや割引材料。当地1コース実績は2走2勝だがサンプルが極端に少なく参考程度"
-      ],
-      "sample_sizes": {
-        "venue_course_races": 3137,
-        "racer_venue_course_races": 2,
-        "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 137,
-        "racer_overall_races": 414,
-        "model_training_races": 76890
-      }
-    },
-    {
-      "stadium_number": 13,
-      "race_number": 6,
-      "recommended_boat": 1,
-      "predicted_probability": 0.6894,
-      "reasons": [
-        "モデル予想確率68.9%・2位(13.9%)との差+55.1pt",
-        "尼崎はコース1勝率58.9%・イン逃げ率56.9%(過去3,154レース)で全国平均比+4.0pt。イン戦傾向がはっきりした水面",
-        "モーター2連率38.2%(35〜40%帯、同帯通算勝率24.4%/41レース)は平均以上",
-        "当地1コース実績は4走3勝(参考値)、通算勝率26.9%(331走89勝)・決まり手は逃げが53.9%と安定した『イン逃げ』選手"
-      ],
-      "sample_sizes": {
-        "venue_course_races": 3154,
-        "racer_venue_course_races": 4,
-        "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 41,
-        "racer_overall_races": 331,
-        "model_training_races": 76890
-      }
-    },
-    {
-      "stadium_number": 19,
-      "race_number": 5,
-      "recommended_boat": 1,
-      "predicted_probability": 0.6746,
-      "reasons": [
-        "モデル予想確率67.5%・2位(13.1%)との差+54.3pt",
-        "下関は本日の候補の中でイン戦傾向が最も強い会場: コース1勝率60.7%・イン逃げ率57.5%(過去3,087レース、全国平均比+5.9pt)",
-        "選手自身の決まり手は通算勝利(72勝)の68.1%が逃げと非常に高比率で、逃げ型の選手が逃げに強い水面に入る好材料",
-        "ただしモーター2連率22.2%は低水準(<30%帯、同帯通算勝率16.4%/67レース)で、モーター面は本命度を下げる要因。当地1コース実績は1走0勝とサンプルが少なすぎて参考にならない(low_sample)"
-      ],
-      "sample_sizes": {
-        "venue_course_races": 3087,
-        "racer_venue_course_races": 1,
-        "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 67,
-        "racer_overall_races": 325,
-        "model_training_races": 76890
-      }
-    },
-    {
-      "stadium_number": 7,
-      "race_number": 7,
-      "recommended_boat": 1,
-      "predicted_probability": 0.6332,
-      "reasons": [
-        "モデル予想確率63.3%・2位(15.5%)との差+47.8pt",
-        "蒲郡のコース1勝率56.8%・イン逃げ率55.3%(過去3,250レース)は全国平均より+2.0pt高い",
-        "モーター2連率48.2%は本日の候補の中で最高水準(45%+帯、同帯通算勝率27.0%/37レース)",
-        "選手の通算勝率28.6%(353走101勝)は候補中でもトップクラスで、決まり手も逃げが54.5%。当地1コース実績は3走2勝(参考値)"
-      ],
-      "sample_sizes": {
-        "venue_course_races": 3250,
-        "racer_venue_course_races": 3,
-        "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 37,
-        "racer_overall_races": 353,
+        "racer_motor_band_races": 60,
+        "racer_motor_band_low_sample": false,
+        "racer_kimarite_races": 41,
+        "racer_kimarite_low_sample": false,
+        "racer_overall_races": 272,
         "model_training_races": 76890
       }
     },
     {
       "stadium_number": 9,
-      "race_number": 3,
+      "race_number": 1,
       "recommended_boat": 1,
-      "predicted_probability": 0.6814,
+      "predicted_probability": 0.7026,
       "reasons": [
-        "モデル予想確率68.1%・2位(10.3%)との差+57.9pt",
-        "津のコース1勝率57.3%・イン逃げ率54.3%(過去3,341レース)は全国平均より+2.5pt高い",
-        "モーター2連率45.6%(45%+帯、同帯通算勝率28.3%/53レース)も良好な水準",
-        "当地1コース実績は2走1勝(サンプル少・参考)、通算勝率23.4%(333走78勝)"
+        "モデル予想確率70.3%・2位(8.8%)との差+61.4pt",
+        "津はコース1勝率57.3%・イン逃げ率54.4%(過去3,341レース)で全国平均より+2.5pt高いイン戦有利な水面",
+        "選手の全国勝率6.59・通算勝率24.6%(374走92勝)は安定した数字で、通算勝利の50.0%が逃げによるものとイン逃げ実績も十分",
+        "モーター2連率26%は<30%帯だが、同帯の通算勝率自体は25.7%(109レース)とそこまで低くない。当地1コースの実績は3走2勝(66.7%、参考値)で悪くない"
       ],
       "sample_sizes": {
         "venue_course_races": 3341,
-        "racer_venue_course_races": 2,
-        "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 53,
-        "racer_overall_races": 333,
-        "model_training_races": 76890
-      }
-    },
-    {
-      "stadium_number": 18,
-      "race_number": 7,
-      "recommended_boat": 1,
-      "predicted_probability": 0.4941,
-      "reasons": [
-        "G1『ダイヤモンドカップ』の一戦で、本日確認したG1戦(徳山・多摩川)の中では最も高い予想確率(2位との差+33.6pt)。予想確率自体は一般戦より低いが、これは出走選手全体のレベルが拮抗しているためで、格下相手というわけではない点に留意",
-        "徳山は本日確認した会場の中で最もイン戦傾向が強い水面: コース1勝率62.1%・イン逃げ率59.1%(過去3,293レース、全国平均比+7.3pt)",
-        "選手の全国勝率7.36・当地勝率7.14はともに高水準。当地1コース実績は7走5勝(参考値ながら比較的サンプルが多め)",
-        "通算勝率25.2%(282走71勝)、決まり手は逃げが57.7%とイン逃げ型"
-      ],
-      "sample_sizes": {
-        "venue_course_races": 3293,
-        "racer_venue_course_races": 7,
-        "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 129,
-        "racer_overall_races": 282,
-        "model_training_races": 76890
-      }
-    },
-    {
-      "stadium_number": 14,
-      "race_number": 1,
-      "recommended_boat": 1,
-      "predicted_probability": 0.7991,
-      "reasons": [
-        "モデル予想確率79.9%・2位(7.0%)との差+72.9ptと本日全レース中最高の確信度",
-        "【要注意】ただし鳴門はコース1勝率48.7%・イン逃げ率46.9%(過去2,971レース)と、全国平均(54.8%)より-6.2pt低い『イン戦が決まりにくい』水面であり、モデルの確信度の高さと過去の当地傾向が食い違っている",
-        "モーター2連率53.0%(45%+帯)は非常に高水準で、この選手の高スコアは主にモーター評価によって押し上げられている可能性が高い(同帯通算勝率21.9%/32レース)",
-        "選手自身の全国勝率5.9・当地勝率5.4は今回の候補群の中で最も低く、鉄板とまでは言い切れない。参加する場合も他候補より慎重な資金配分を推奨"
-      ],
-      "sample_sizes": {
-        "venue_course_races": 2971,
         "racer_venue_course_races": 3,
         "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 32,
-        "racer_overall_races": 365,
+        "racer_motor_band_races": 109,
+        "racer_motor_band_low_sample": false,
+        "racer_kimarite_races": 92,
+        "racer_kimarite_low_sample": false,
+        "racer_overall_races": 374,
+        "model_training_races": 76890
+      }
+    },
+    {
+      "stadium_number": 8,
+      "race_number": 1,
+      "recommended_boat": 1,
+      "predicted_probability": 0.7067,
+      "reasons": [
+        "モデル予想確率70.7%・2位(10.4%)との差+60.3pt",
+        "常滑はコース1勝率58.2%・イン逃げ率55.6%(過去3,493レース)で全国平均より+3.4pt高い水面(同一開催の8R-2にも同様の傾向の候補あり)",
+        "通算勝利(45勝)の62.2%が逃げによるものでイン逃げ型の勝ちパターンを持つ",
+        "【要注意】選手の通算勝率は17.8%(253走45勝)、当地1コースの実績も3走1勝(33.3%)と、他候補と比べるとやや見劣りする数字。モーター2連率36.84%(35〜40%帯)の帯別通算勝率も10.2%(59レース)と低めで、水面のイン戦傾向頼みの側面が大きい一戦"
+      ],
+      "sample_sizes": {
+        "venue_course_races": 3493,
+        "racer_venue_course_races": 3,
+        "racer_venue_course_low_sample": true,
+        "racer_motor_band_races": 59,
+        "racer_motor_band_low_sample": false,
+        "racer_kimarite_races": 45,
+        "racer_kimarite_low_sample": false,
+        "racer_overall_races": 253,
+        "model_training_races": 76890
+      }
+    },
+    {
+      "stadium_number": 16,
+      "race_number": 1,
+      "recommended_boat": 1,
+      "predicted_probability": 0.7017,
+      "reasons": [
+        "モデル予想確率70.2%・2位(10.0%)との差+60.2pt",
+        "児島はコース1勝率55.9%・イン逃げ率53.5%(過去3,288レース)で全国平均よりやや高いイン戦有利な水面",
+        "選手の全国勝率5.5・通算勝率24.4%(340走83勝)、通算勝利の51.8%が逃げによるものと標準以上のイン逃げ実績",
+        "モーター2連率32.55%(30〜35%帯、同帯通算勝率16.0%/75レース)は平均的な水準。当地1コースの実績データは無く(初出走または蓄積不足)、水面傾向と選手個人の実力の組み合わせによる評価"
+      ],
+      "sample_sizes": {
+        "venue_course_races": 3288,
+        "racer_venue_course_races": 0,
+        "racer_venue_course_low_sample": true,
+        "racer_motor_band_races": 75,
+        "racer_motor_band_low_sample": false,
+        "racer_kimarite_races": 83,
+        "racer_kimarite_low_sample": false,
+        "racer_overall_races": 340,
+        "model_training_races": 76890
+      }
+    },
+    {
+      "stadium_number": 8,
+      "race_number": 5,
+      "recommended_boat": 1,
+      "predicted_probability": 0.7152,
+      "reasons": [
+        "モデル予想確率71.5%・2位(11.4%)との差+60.1pt",
+        "常滑はコース1勝率58.2%・イン逃げ率55.6%(過去3,493レース)で全国平均より+3.4pt高い水面(本日3レース目のイン戦有利候補)",
+        "選手の全国勝率7.21・通算勝率31.9%(385走123勝)は本日の候補群の中でも最も高い水準で、通算勝利の61.0%が逃げによるものと強いイン逃げ実績を持つ",
+        "モーター2連率34.93%(30〜35%帯、同帯通算勝率30.8%/91レース)も良好。当地1コースの実績は3走3勝(100%、サンプルは少なく参考値)"
+      ],
+      "sample_sizes": {
+        "venue_course_races": 3493,
+        "racer_venue_course_races": 3,
+        "racer_venue_course_low_sample": true,
+        "racer_motor_band_races": 91,
+        "racer_motor_band_low_sample": false,
+        "racer_kimarite_races": 123,
+        "racer_kimarite_low_sample": false,
+        "racer_overall_races": 385,
+        "model_training_races": 76890
+      }
+    },
+    {
+      "stadium_number": 11,
+      "race_number": 6,
+      "recommended_boat": 1,
+      "predicted_probability": 0.6965,
+      "reasons": [
+        "モデル予想確率69.7%・2位(10.4%)との差+59.3pt",
+        "びわこはコース1勝率52.3%・イン逃げ率50.3%(過去3,302レース)で全国平均よりやや低く、水面自体のイン戦傾向は強くない",
+        "それでも選手の当地1コース実績は18走11勝(61.1%)と本日の候補中で最もサンプル数が多く安心材料(low_sampleではない)。モーター2連率49.02%(45%+帯、同帯通算勝率31.4%/35レース)も高水準",
+        "通算勝利(81勝)に占める逃げの比率は43.2%とやや控えめで、逃げ一本槍というより差しやまくりも織り交ぜる選手。全国勝率6.45・通算勝率25.2%(322走81勝)は平均的"
+      ],
+      "sample_sizes": {
+        "venue_course_races": 3302,
+        "racer_venue_course_races": 18,
+        "racer_venue_course_low_sample": false,
+        "racer_motor_band_races": 35,
+        "racer_motor_band_low_sample": false,
+        "racer_kimarite_races": 81,
+        "racer_kimarite_low_sample": false,
+        "racer_overall_races": 322,
+        "model_training_races": 76890
+      }
+    },
+    {
+      "stadium_number": 23,
+      "race_number": 1,
+      "recommended_boat": 1,
+      "predicted_probability": 0.7262,
+      "reasons": [
+        "モデル予想確率72.6%・2位(13.4%)との差+59.2pt",
+        "唐津はコース1勝率55.6%・イン逃げ率53.1%(過去3,009レース)で全国平均よりやや高いイン戦有利な水面",
+        "選手の全国勝率6.35・通算勝率20.1%(359走72勝)、通算勝利の54.2%が逃げによるものと標準的なイン逃げ実績。当地1コースの実績は8走5勝(62.5%、参考値)",
+        "【留意点】モーター2連率が0%(=今節交換後などでまだ2連対実績が無い可能性)で、同帯(<30%帯)の通算勝率16.8%(95レース)を参考にするしかなく、実際のモーター調子は未知数な点に注意"
+      ],
+      "sample_sizes": {
+        "venue_course_races": 3009,
+        "racer_venue_course_races": 8,
+        "racer_venue_course_low_sample": true,
+        "racer_motor_band_races": 95,
+        "racer_motor_band_low_sample": false,
+        "racer_kimarite_races": 72,
+        "racer_kimarite_low_sample": false,
+        "racer_overall_races": 359,
         "model_training_races": 76890
       }
     }
