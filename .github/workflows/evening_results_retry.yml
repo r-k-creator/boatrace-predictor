@@ -6,8 +6,9 @@ name: Evening results retry
 
 on:
   schedule:
-    # 毎日 14:00 UTC = 23:00 JST に実行
-    - cron: "0 14 * * *"
+    # 毎日 14:07 UTC = 23:07 JST に実行。分を0以外にずらす理由は
+    # evening_results.ymlのコメントを参照(毎時ちょうどの混雑回避)。
+    - cron: "7 14 * * *"
   workflow_dispatch: {}
 
 permissions:
