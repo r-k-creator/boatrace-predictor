@@ -29,19 +29,24 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Retry fetching today's results and rebuild stats
+      - name: Retry fetching yesterday's results and rebuild stats
         working-directory: scripts
         run: |
           python fetch_results.py
           python build_stats.py
 
-      - name: Evaluate today's predictions (振り返り)
+      - name: Evaluate yesterday's predictions (振り返り)
         working-directory: scripts
         run: python evaluate.py
 
       - name: Retrain model on accumulated data (学習)
         working-directory: scripts
         run: python train_model.py
+
+      - name: Fetch today's (JST) results for candidate/bet evaluation
+        # 理由はevening_results.ymlのコメントを参照。
+        working-directory: scripts
+        run: python fetch_results.py "$(TZ=Asia/Tokyo date +%Y-%m-%d)"
 
       - name: Evaluate today's candidates (的中率・回収率の集計)
         working-directory: scripts
