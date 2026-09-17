@@ -42,11 +42,25 @@ jobs:
         working-directory: scripts
         run: python evaluate_candidates.py
 
+      - name: Generate bet suggestions for today's candidates (rank/budget/bets)
+        working-directory: scripts
+        run: python generate_bets.py
+
+      - name: Evaluate today's ranked bets (実際の買い目ベースの収支)
+        working-directory: scripts
+        run: python evaluate_bets.py
+
       - name: Commit and push updated data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data
+          # generate_bets.pyがこのジョブ内でdata/candidates.jsonを書き換えている場合、
+          # それはevaluate_bets.pyが使うための一時的なものでコミットはしない
+          # (candidates_notify.ymlがdata/candidates.jsonへのpushをトリガーにしているため、
+          # ここでコミットすると自分自身を再度トリガーしてしまい、朝の候補メールが
+          # 深夜に二重送信されてしまう)。
+          git restore --staged data/candidates.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "Evening results fetch & retrain $(date -u +'%Y-%m-%d')"
             git push
@@ -66,3 +80,16 @@ jobs:
           to: ${{ secrets.NOTIFY_EMAIL_TO }}
           from: "boatrace-predictor <${{ secrets.GMAIL_USERNAME }}>"
           body: file://candidates_evaluation_report.txt
+
+      - name: Send bets P&L email
+        if: hashFiles('bets_evaluation_report.txt') != ''
+        uses: dawidd6/action-send-mail@v22
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "【ボートレース予想】本日の収支"
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: "boatrace-predictor <${{ secrets.GMAIL_USERNAME }}>"
+          body: file://bets_evaluation_report.txt

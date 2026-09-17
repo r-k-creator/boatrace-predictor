@@ -33,6 +33,12 @@ RACE_RENAME = {
 
 ENTRY_NEW_FIELDS = ["entry_course_program", "motor_2rate", "motor_3rate"]
 
+RACE_EXOTIC_PAYOUT_FIELDS = [
+    "exacta_combination", "exacta_payout",
+    "trifecta_combination", "trifecta_payout",
+    "trio_combination", "trio_payout",
+]
+
 
 def migrate_results_races():
     path = Path(RESULTS_RACES_CSV)
@@ -59,6 +65,38 @@ def migrate_results_races():
         writer.writeheader()
         writer.writerows(new_rows)
     print(f"[done] data/results_races.csv を新スキーマに移行しました(バックアップ: {backup})")
+
+
+def migrate_results_races_add_exotic_payouts():
+    """2連単/3連単/3連複の払戻カラムを追加する(fetch_results.py拡張に合わせた移行)。
+    既存行(過去分)は取得し直さず空欄のまま列だけ追加する(scripts/fetch_results.py
+    の冒頭コメント参照)。すでに列があれば何もしない。
+    """
+    path = Path(RESULTS_RACES_CSV)
+    if not path.exists():
+        print("[skip] data/results_races.csv がありません")
+        return
+
+    with open(path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+        rows = list(reader)
+
+    if all(c in fieldnames for c in RACE_EXOTIC_PAYOUT_FIELDS):
+        print("[skip] data/results_races.csv にはすでに2連単/3連単/3連複の払戻カラムがあります")
+        return
+
+    new_fieldnames = list(fieldnames) + [c for c in RACE_EXOTIC_PAYOUT_FIELDS if c not in fieldnames]
+    new_rows = [{**{c: "" for c in RACE_EXOTIC_PAYOUT_FIELDS}, **row} for row in rows]
+
+    backup = path.with_suffix(path.suffix + ".bak2")
+    shutil.copyfile(path, backup)
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=new_fieldnames)
+        writer.writeheader()
+        writer.writerows(new_rows)
+    print(f"[done] data/results_races.csv に2連単/3連単/3連複の払戻カラムを追加しました"
+          f"(既存行は空欄。バックアップ: {backup})")
 
 
 def migrate_results_entries():
@@ -121,6 +159,7 @@ def migrate_results_entries():
 
 def main():
     migrate_results_races()
+    migrate_results_races_add_exotic_payouts()
     migrate_results_entries()
 
 

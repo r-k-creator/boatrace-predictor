@@ -1,135 +1,202 @@
 """
-data/candidates.json(rank/budget/betsつき)に実際に入っている買い目(複数タイプ・
-金額配分)を、実際のレース結果と突き合わせて的中/回収額を判定し、本日の収支を集計する。
+data/candidates.json(generate_bets.py実行後、rank/budget/bets付き)に実際に入っている
+買い目(2連単/3連単/3連複、点数・金額配分込み)を、実際のレース結果
+(data/results_races.csv の exacta/trifecta/trio 払戻カラム、fetch_results.py参照)と
+突き合わせて的中判定・回収額を計算し、本日の収支を確定する。
 
-evaluate_candidates.py(単勝100円均等の仮想収支、data/candidates_evaluations.csvに
-日次蓄積)とは別物: こちらはcandidates.jsonにgenerate_bets.pyが実際に生成したbets
-(2連単/3連単/3連複、点数・金額配分込み)をそのまま評価する。
+evaluate_candidates.py(単勝100円均等の仮想収支)とは別物: こちらはgenerate_bets.pyが
+実際に生成したbetsをそのまま評価する。買い目1件ごとの記録を data/bets_evaluations.csv
+に追記する(このCSVは将来の段階2=学習機能のための蓄積が主目的で、このスクリプト自体は
+集計・分析は行わない。同時に、同日重複送信を防ぐための済み判定にも使う)。メール本文
+(会場R・ランク・投資・回収・収支・結果の一覧+外れたレースの事実ベースの理由)は
+bets_evaluation_report.txt(リポジトリ直下、gitには追加しない)に書き出す。
 
-results_races.csv/results_entries.csvには2連単・3連単・3連複のpayout情報が保存されて
-いない(単勝・複勝のみ)ため、このスクリプトはBoatrace Open APIのresultsを直接再取得して
-評価する(payouts.exacta=2連単、payouts.trifecta=3連単、payouts.trio=3連複。combination
-文字列の表記("-"=着順あり、"="=組み合わせ)はAPIとgenerate_bets.pyで元々一致している)。
-過去日の結果はAPI側でも同じ形で取得できるが、このスクリプトは今のところ「今日」専用の
-簡易確認用(試験実行)。継続運用するならfetch_results.py側でexacta/trifecta/trioの
-payoutsもCSVに保存するよう拡張するのが筋。
+「どの日を評価するか」はevaluate_candidates.py同様、candidates.json自身の"date"
+フィールドを正とする(today_jst()から逆算しない)。対応するresults_races.csv/
+results_entries.csvの行がその日付でまだ無ければ、何もせず終了する
+(evening_results.yml/evening_results_retry.ymlのどちらでも安全に再実行できる)。
+
+evening_results.yml / evening_results_retry.yml から、generate_bets.py の後に
+呼ばれる想定(candidates.jsonにbetsが入っている前提)。
 
 使い方:
-    python scripts/evaluate_bets.py            # 今日の分
-    python scripts/evaluate_bets.py 2026-09-17  # 指定日
+    python scripts/evaluate_bets.py
 """
-import json
 import os
-import sys
 
-from common import DATA_DIR, fetch_json, parse_date, results_url_for_date, today_jst
+from common import DATA_DIR, append_rows, read_existing_dates
+from evaluate_candidates import (
+    format_miss_reason,
+    kimarite_label,
+    load_candidates,
+    load_results_for_date,
+)
 
-CANDIDATES_JSON = os.path.join(DATA_DIR, "candidates.json")
+BETS_EVAL_CSV = os.path.join(DATA_DIR, "bets_evaluations.csv")
+REPORT_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "bets_evaluation_report.txt",
+)
 
-BET_TYPE_TO_API_KEY = {
-    "2連単": "exacta",
-    "3連単": "trifecta",
-    "3連複": "trio",
+BET_EVAL_FIELDS = [
+    "date", "stadium_number", "race_number", "rank",
+    "bet_type", "combination", "amount", "estimated_probability",
+    "hit", "payout_per_100", "return",
+]
+
+# 買い目の種類 -> results_races.csv側の(実際の組み合わせ, 100円あたり払戻)カラム名。
+BET_TYPE_TO_RACE_COLUMNS = {
+    "2連単": ("exacta_combination", "exacta_payout"),
+    "3連単": ("trifecta_combination", "trifecta_payout"),
+    "3連複": ("trio_combination", "trio_payout"),
 }
 
 
-def load_results_payouts(target_date):
-    url = results_url_for_date(target_date)
-    print(f"[fetch] {url}")
-    payload = fetch_json(url)
-    if payload is None:
-        return {}
-    return {
-        (str(race["race_stadium_number"]), str(race["race_number"])): race.get("payouts", {})
-        for race in payload.get("results", [])
-    }
+def already_evaluated(date_str):
+    return date_str in read_existing_dates(BETS_EVAL_CSV, date_field="date")
 
 
-def payout_for_combination(payouts, api_key, combination):
-    for item in payouts.get(api_key, []) or []:
-        if item.get("combination") == combination:
-            return item.get("payout")
-    return None
-
-
-def evaluate_bet(bet, payouts):
-    api_key = BET_TYPE_TO_API_KEY.get(bet["type"])
-    if api_key is None:
+def evaluate_bet(bet, race_row):
+    """1買い目を判定する。戻り値: (hit, payout_per_100, return円)。"""
+    combo_col, payout_col = BET_TYPE_TO_RACE_COLUMNS.get(bet["type"], (None, None))
+    if combo_col is None:
         print(f"[warn] 未対応の買い目種類のためスキップ: {bet['type']}")
-        return {"hit": False, "return": 0}
-    payout = payout_for_combination(payouts, api_key, bet["combination"])
-    if payout is None:
-        return {"hit": False, "return": 0}
-    units = bet["amount"] / 100
-    return {"hit": True, "return": round(units * payout)}
+        return False, None, 0
+
+    actual_combo = (race_row.get(combo_col) or "").strip()
+    if not actual_combo or actual_combo != bet["combination"]:
+        return False, None, 0
+
+    payout_raw = race_row.get(payout_col)
+    payout = int(payout_raw) if payout_raw else 0
+    return True, payout, round(bet["amount"] / 100 * payout)
+
+
+def build_miss_reason(candidate, race_row, entries):
+    """予想艇(recommended_boat)が実際には1着ではなかったレースについて、
+    evaluate_candidates.pyのformat_miss_reasonと同じ事実ベース説明を組み立てる。
+    予想艇がそのまま1着だった場合はNone(このスクリプトでは深掘りする理由が無いため)。
+    """
+    recommended_boat = str(candidate["recommended_boat"])
+    win_boat = (race_row.get("win_boat") or "").strip()
+    if not win_boat or win_boat == recommended_boat:
+        return None
+
+    stadium, race_number = str(candidate["stadium_number"]), str(candidate["race_number"])
+    winner_entry = entries.get((stadium, race_number, win_boat))
+    picked_entry = entries.get((stadium, race_number, recommended_boat))
+
+    candidate_result = {
+        "recommended_boat": candidate["recommended_boat"],
+        "predicted_probability": candidate.get("predicted_probability"),
+        "miss_detail": {
+            "winner_boat": win_boat,
+            "winner_course": winner_entry.get("entry_course_actual") if winner_entry else None,
+            "winner_start_timing": winner_entry.get("start_timing") if winner_entry else None,
+            "kimarite": kimarite_label(race_row.get("race_technique_number")),
+            "picked_start_timing": picked_entry.get("start_timing") if picked_entry else None,
+        },
+    }
+    return format_miss_reason(candidate_result)
 
 
 def main():
-    if len(sys.argv) > 1:
-        date_str = sys.argv[1]
-        target_date = parse_date(date_str)
-    else:
-        target_date = today_jst()
-        date_str = target_date.isoformat()
-
-    if not os.path.exists(CANDIDATES_JSON):
-        print("[info] data/candidates.json が見つかりません")
-        return
-    with open(CANDIDATES_JSON, encoding="utf-8") as f:
-        payload = json.load(f)
-
-    candidates = payload.get("candidates", [])
-    if payload.get("date") != date_str:
-        print(f"[warn] data/candidates.json の date({payload.get('date')}) と "
-              f"評価対象日({date_str})が一致していません。ズレを承知の上で続行します。")
-    if not candidates:
-        print("[info] candidates が空です")
+    payload = load_candidates()
+    if not payload or not payload.get("candidates"):
+        print("[info] data/candidates.json が無い、または候補レースが0件のため収支評価をスキップします")
         return
 
-    payouts_by_race = load_results_payouts(target_date)
-    if not payouts_by_race:
-        print(f"[info] {date_str} の結果データがまだありません")
+    date_str = payload.get("date")
+    if not date_str:
+        print("[warn] candidates.json に date フィールドがありません。収支評価をスキップします")
         return
 
-    total_bet, total_return = 0, 0
-    race_rows = []
-    for c in candidates:
+    if already_evaluated(date_str):
+        print(f"[skip] {date_str} は既に収支評価済みです(data/bets_evaluations.csv)")
+        return
+
+    races, entries = load_results_for_date(date_str)
+    if not races:
+        print(f"[info] {date_str} の結果データがまだありません。収支評価をスキップします"
+              f"(evening_results_retry.ymlまたは翌日以降に結果が揃ってから再実行してください)")
+        return
+
+    eval_rows, report_lines = [], []
+    total_bet, total_return, n_races = 0, 0, 0
+
+    for c in payload["candidates"]:
         key = (str(c["stadium_number"]), str(c["race_number"]))
-        payouts = payouts_by_race.get(key)
+        race_row = races.get(key)
         bets = c.get("bets") or []
-        if payouts is None or not bets:
+        if not race_row or not bets:
             continue
 
         race_bet, race_return, hits = 0, 0, []
         for b in bets:
-            result = evaluate_bet(b, payouts)
+            hit, payout, ret = evaluate_bet(b, race_row)
+            eval_rows.append({
+                "date": date_str,
+                "stadium_number": c["stadium_number"],
+                "race_number": c["race_number"],
+                "rank": c["rank"],
+                "bet_type": b["type"],
+                "combination": b["combination"],
+                "amount": b["amount"],
+                "estimated_probability": b["estimated_probability"],
+                "hit": 1 if hit else 0,
+                "payout_per_100": payout if payout is not None else "",
+                "return": ret,
+            })
             race_bet += b["amount"]
-            race_return += result["return"]
-            if result["hit"]:
-                hits.append((b, result["return"]))
+            race_return += ret
+            if hit:
+                hits.append(f"{b['type']}{b['combination']}({ret}円)")
 
         total_bet += race_bet
         total_return += race_return
-        race_rows.append({
-            "stadium_number": c["stadium_number"], "race_number": c["race_number"],
-            "rank": c["rank"], "bet": race_bet, "return": race_return, "hits": hits,
-        })
+        n_races += 1
 
-    print(f"\n=== {date_str} 収支(ランク付けした買い目ベース) ===")
-    for r in race_rows:
-        status = "的中" if r["hits"] else "不的中"
-        hit_detail = ", ".join(f"{b['type']}{b['combination']}({ret}円)" for b, ret in r["hits"])
-        pnl = r["return"] - r["bet"]
-        print(f"第{r['stadium_number']}場{r['race_number']}R [{r['rank']}] "
-              f"投資{r['bet']}円 回収{r['return']}円 収支{pnl:+d}円 "
-              f"{status}" + (f" - {hit_detail}" if hit_detail else ""))
+        pnl = race_return - race_bet
+        status = "的中" if hits else "不的中"
+        line = (f"第{c['stadium_number']}場{c['race_number']}R [{c['rank']}] "
+                f"投資{race_bet}円 回収{race_return}円 収支{pnl:+d}円 {status}")
+        if hits:
+            line += " - " + ", ".join(hits)
+        report_lines.append(line)
+
+        trifecta_combo = (race_row.get("trifecta_combination") or "").strip()
+        if trifecta_combo:
+            report_lines.append(
+                f"  実際の結果: {trifecta_combo}(決まり手: "
+                f"{kimarite_label(race_row.get('race_technique_number'))})"
+            )
+        if len(hits) < len(bets):  # 1つでも外れた買い目があれば理由を付記
+            miss_reason = build_miss_reason(c, race_row, entries)
+            if miss_reason:
+                report_lines.append(f"  {miss_reason}")
+        report_lines.append("")
+
+    if not eval_rows:
+        print(f"[info] {date_str}: 収支を計算できる候補レースがありませんでした")
+        return
+
+    append_rows(BETS_EVAL_CSV, BET_EVAL_FIELDS, eval_rows)
 
     pnl_total = total_return - total_bet
     rate = total_return / total_bet * 100 if total_bet else 0.0
-    print(f"\n合計投資額: {total_bet:,}円")
-    print(f"合計回収額: {total_return:,}円")
-    print(f"収支: {pnl_total:+,}円")
-    print(f"回収率: {rate:.1f}%")
+
+    header = [
+        f"【{date_str}の収支(ランク付けした買い目ベース)】",
+        f"対象レース数: {n_races}件",
+        f"合計投資額: {total_bet:,}円 / 合計回収額: {total_return:,}円 / "
+        f"収支: {pnl_total:+,}円 / 回収率: {rate:.1f}%",
+        "",
+    ]
+    with open(REPORT_PATH, "w", encoding="utf-8") as f:
+        f.write("\n".join(header + report_lines))
+
+    print(f"[done] {date_str}: {n_races}レース・{len(eval_rows)}買い目を評価しました "
+          f"(収支{pnl_total:+,}円 / 回収率{rate:.1f}%) -> {REPORT_PATH}")
 
 
 if __name__ == "__main__":

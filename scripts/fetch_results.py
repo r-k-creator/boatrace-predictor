@@ -12,6 +12,12 @@ motor_2rate/motor_3rate(モーターの2/3連率)と entry_course_program(出走
 同日に取得済みの data/programs/{date}.csv と突き合わせて補完する
 (programsデータが無い日は空欄になる)。
 
+単勝(win)・複勝(place)に加えて、2連単(exacta)・3連単(trifecta)・3連複(trio)の
+払戻(combination/payout)もresults_races.csvに保存する(scripts/generate_bets.pyが
+作る買い目の的中判定に scripts/evaluate_bets.py が使う)。2025-05-01〜のこの列が
+無い既存データは scripts/migrate_csv_schema.py で空欄のまま列だけ追加済み
+(過去分を遡って取得し直してはいない)。
+
 使い方:
     python scripts/fetch_results.py            # 昨日の分を取得
     python scripts/fetch_results.py 2025-07-15  # 指定日を取得
@@ -40,6 +46,13 @@ RACE_FIELDS = [
     "win_boat", "win_payout",
     "place_boat_1", "place_payout_1",
     "place_boat_2", "place_payout_2",
+    # 2連単・3連単・3連複(それぞれ実際の着順に対して1通りしかないため、単勝と同じく
+    # combination/payoutの1組だけを保存する。generate_bets.pyの買い目評価
+    # (scripts/evaluate_bets.py)で使う。combinationの表記("-"=着順あり、"="=組み合わせ)は
+    # APIのpayouts側の表記そのままで、generate_bets.py側の買い目combinationと一致する)
+    "exacta_combination", "exacta_payout",
+    "trifecta_combination", "trifecta_payout",
+    "trio_combination", "trio_payout",
 ]
 
 ENTRY_FIELDS = [
@@ -67,6 +80,9 @@ def parse_results(payload, program_by_boat):
         win_combo, win_payout = combo_payout(payouts, "win", 0)
         place1_combo, place1_payout = combo_payout(payouts, "place", 0)
         place2_combo, place2_payout = combo_payout(payouts, "place", 1)
+        exacta_combo, exacta_payout = combo_payout(payouts, "exacta", 0)
+        trifecta_combo, trifecta_payout = combo_payout(payouts, "trifecta", 0)
+        trio_combo, trio_payout = combo_payout(payouts, "trio", 0)
 
         stadium_number = race.get("race_stadium_number")
         race_number = race.get("race_number")
@@ -88,6 +104,12 @@ def parse_results(payload, program_by_boat):
             "place_payout_1": place1_payout,
             "place_boat_2": place2_combo,
             "place_payout_2": place2_payout,
+            "exacta_combination": exacta_combo,
+            "exacta_payout": exacta_payout,
+            "trifecta_combination": trifecta_combo,
+            "trifecta_payout": trifecta_payout,
+            "trio_combination": trio_combo,
+            "trio_payout": trio_payout,
         })
 
         for boat in race.get("boats", []):
