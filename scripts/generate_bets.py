@@ -1,7 +1,7 @@
 """
 data/candidates.json の各候補レースに、賭け方の提案(rank/budget/bets)を追加する。
 
-【ランク分け(S/A/B/C)としきい値の根拠】
+【ランク分け(SS/S/A/B/C)としきい値の根拠】
 predictions/{date}.csv の predicted_probability(艇ごとの推定勝率、レース内で合計1)の
 うち、予想1位艇(=candidates.jsonのrecommended_boat)の値をもとに、実際の過去実績
 (data/backtest_evaluations_b.csv、パターンb=天候を単純加算する現行の本番設計、
@@ -9,14 +9,18 @@ predictions/{date}.csv の predicted_probability(艇ごとの推定勝率、レ�
 集計してキャリブレーションした:
 
     predicted_probability帯    実際のhit_top1_rate   件数
-    [0.70, 1.00]                     77.7%          2,915
+    [0.80, 1.00]                     86.2%             59  ← SSしきい値
+    [0.70, 0.80)                     77.7%          2,856
     [0.60, 0.70)                     67.9%         17,053
     [0.50, 0.60)                     56.5%         30,394
     [0.00, 0.50)                     41.3%         26,513
 
-この結果から S/A/B/C のしきい値を次の通り決めた(RANK_THRESHOLDS参照)。
-C(0.50未満)は上記の通り実績が41.3%とモデル全体の他帯より明確に低く、
-「賭け対象」というより「参考情報として見るレース」に留める。
+0.70以上をさらに0.05刻みで見ると [0.70,0.75)=77.1%(n=2,291) [0.75,0.80)=79.1%(n=565)
+[0.80,0.85)=86.2%(n=58) と、0.80を境に明確な段差がある(0.85以上はn=1のためSSの
+上限は設けない)ため、SSのしきい値を0.80に設定した。ただしn=59は他帯(数千〜数万件)
+と比べて薄く、95%信頼区間はおおよそ±9pt(77%〜95%程度)と広い点は留意。
+C(0.50未満)は実績41.3%とモデル全体の他帯より明確に低く、「賭け対象」というより
+「参考情報として見るレース」に留める。
 
 【買い目の推定確率(Harvilleの公式)】
 predictions/{date}.csv の艇別勝率を各艇の「強さ」とみなし、Harville(1973)の公式で
@@ -28,23 +32,28 @@ predictions/{date}.csv の艇別勝率を各艇の「強さ」とみなし、Har
 (betting_noteとしてdata/candidates.json自体にも明記する)。
 
 【点数・買い目の種類】
-レース全体(6艇)の勝率分布のシャノンエントロピー(正規化)を「荒れ具合」の指標とし、
-拮抗しているほど点数を増やす(3〜10点、極端な混戦のみ最大15点まで拡張)。この点数・
-予算を、rank別に以下のように複数の買い目種類へ配分する(S/Aは2種類の組み合わせ):
-    S: 2連単(手堅い) + 3連単(上振れ狙い)
+レース全体(6艇)の勝率分布のシャノンエントロピー(正規化)を「荒れ具合」の指標とする。
+S/A/Bは基本6〜9点(拮抗しているほど増やす。極端な混戦のみ最大15点まで拡張。
+下限は3点ではなく6点=SS以外の候補は最低でも6点は確保する)。SSは「点数を絞った、
+より攻めた買い目」という方針のため別枠で3〜5点(同じくエントロピーで3〜5の範囲で
+連続的に決める)とし、予算はSと同じ5000円のまま(1点あたりの金額はSより大きくなる)。
+この点数・予算を、rank別に以下のように複数の買い目種類へ配分する(SS/S/Aは2種類の
+組み合わせ):
+    SS/S: 2連単(手堅い) + 3連単(上振れ狙い)
     A: 3連単(主軸) + 2連単または3連複(副。1着候補がSしきい値寄り[0.65以上]なら
        さらに手堅い2連単を、B寄り[0.65未満]なら着順リスクを吸収するbox=3連複を選ぶ)
     B: 3連複のみ(着順を外すリスクが相対的に高いため、変更なし)
-S/Aの配分比率(副の取り分)は拮抗度に応じて0.20〜0.60の範囲で連続的に決める
-(拮抗しているレースほど副の取り分を増やす)。点数・予算とも同じ比率で按分し、
-それぞれの種類の中でHarville確率上位N点を選ぶ。金額は各買い目の推定確率に比例して
-100円単位で配分する(最大剰余法で端数調整し、種類ごとの配分合計がその種類の予算と
-ぴったり一致するようにする。2種類の予算の合計は常にrank予算とぴったり一致する)。
+SS/Sと A の配分比率(副の取り分)は拮抗度に応じてそれぞれ0.25〜0.60、0.20〜0.50の
+範囲で連続的に決める(拮抗しているレースほど副の取り分を増やす)。点数・予算とも
+同じ比率で按分し、それぞれの種類の中でHarville確率上位N点を選ぶ。金額は各買い目の
+推定確率に比例して100円単位で配分する(最大剰余法で端数調整し、種類ごとの配分合計が
+その種類の予算とぴったり一致するようにする。2種類の予算の合計は常にrank予算と
+ぴったり一致する)。
 
 【reasonsの警告フラグによるランク調整】
 reasonsに「要注意」「留意点」「食い違」のいずれかを含む文がある場合(候補選定時に
 Routine自身が付けた注意喚起)、モデルの確率だけでは捉えきれないリスクとみなし、
-rankを1段階下げる(S→A、A→B、B→C。Cはこれ以上下げない)。この場合、実際に使う
+rankを1段階下げる(SS→S→A→B→C。Cはこれ以上下げない)。この場合、実際に使う
 final rankは引き下げ後の値だが、引き下げ前のrank(rank_without_caution)と
 caution_flagged=trueも記録し、判断過程を追跡できるようにする。
 
@@ -69,13 +78,14 @@ CANDIDATES_JSON = os.path.join(DATA_DIR, "candidates.json")
 # --- ランクしきい値(スクリプト冒頭のコメント参照。data/backtest_evaluations_b.csv
 #     から実測したpredicted_probability帯ごとのhit_top1_rateに基づく) ---
 RANK_THRESHOLDS = [
+    ("SS", 0.80),
     ("S", 0.70),
     ("A", 0.60),
     ("B", 0.50),
     ("C", 0.0),
 ]
-RANK_BUDGET = {"S": 5000, "A": 3000, "B": 2000, "C": 0}
-RANK_ORDER = ["S", "A", "B", "C"]
+RANK_BUDGET = {"SS": 5000, "S": 5000, "A": 3000, "B": 2000, "C": 0}
+RANK_ORDER = ["SS", "S", "A", "B", "C"]
 
 # reasonsにこれらの語を含む文があれば、モデル確率だけでは拾えないリスクとみなし
 # rankを1段階下げる(実際に候補選定を行ったRoutineが付けた注意喚起を尊重するため)。
@@ -176,11 +186,19 @@ def normalized_entropy(probs):
 
 
 def decide_point_count(competitiveness):
-    """拮抗度(0〜1)を3〜10点に線形マッピングし、極端な混戦だけ最大15点まで拡張する。"""
-    points = 3 + competitiveness * 7
+    """S/A/B用。拮抗度(0〜1)を基本6〜9点に線形マッピングし、極端な混戦だけ
+    最大15点まで拡張する(下限は6点=SS以外は最低でもこの点数を確保する)。
+    """
+    points = 6 + competitiveness * 3
     if competitiveness >= 0.90:
         points += 5
-    return max(3, min(15, round(points)))
+    return max(6, min(15, round(points)))
+
+
+def decide_point_count_ss(competitiveness):
+    """SS用。「点数を絞った、より攻めた買い目」の方針で3〜5点に線形マッピングする。"""
+    points = 3 + competitiveness * 2
+    return max(3, min(5, round(points)))
 
 
 def allocate_budget(combos, budget):
@@ -228,20 +246,25 @@ def bets_for_type(bet_type, race_probs, points, budget):
 def build_bets(rank, race_probs, budget, p_top):
     """rank(caution降格後の最終rank)に応じた買い目リストを組み立てる。"""
     competitiveness = normalized_entropy(race_probs)
-    total_points = decide_point_count(competitiveness)
 
     if rank == "B":
+        total_points = decide_point_count(competitiveness)
         return bets_for_type("3連複", race_probs, total_points, budget)
 
-    if rank == "S":
+    if rank in ("SS", "S"):
         primary_type, secondary_type = "2連単", "3連単"
         # 拮抗しているほど上振れ狙い(3連単)の配分を増やす(0.25〜0.60)。
         secondary_ratio = 0.25 + 0.35 * competitiveness
+        total_points = (
+            decide_point_count_ss(competitiveness) if rank == "SS"
+            else decide_point_count(competitiveness)
+        )
     else:  # A
         primary_type = "3連単"
         # 1着候補がS寄り(確信度が高い)ならさらに手堅い2連単、B寄りならbox(3連複)。
         secondary_type = "2連単" if p_top >= A_SECONDARY_SPLIT_PROBABILITY else "3連複"
         secondary_ratio = 0.20 + 0.30 * competitiveness  # 0.20〜0.50
+        total_points = decide_point_count(competitiveness)
 
     secondary_budget = round(budget * secondary_ratio / 100) * 100
     primary_budget = budget - secondary_budget
@@ -313,7 +336,7 @@ def main():
     rank_counts = defaultdict(int)
     for c in candidates:
         rank_counts[c["rank"]] += 1
-    summary = " / ".join(f"{r}:{rank_counts.get(r, 0)}件" for r in ("S", "A", "B", "C"))
+    summary = " / ".join(f"{r}:{rank_counts.get(r, 0)}件" for r in ("SS", "S", "A", "B", "C"))
     print(f"[done] {date_str}: {len(candidates)}件に賭け方の提案を付与しました ({summary})")
 
 

@@ -60,14 +60,20 @@
         {
           "type": "2連単",
           "combination": "1-5",
-          "amount": 600,
+          "amount": 400,
           "estimated_probability": 0.2203
         },
         {
           "type": "2連単",
           "combination": "1-3",
-          "amount": 500,
+          "amount": 400,
           "estimated_probability": 0.2179
+        },
+        {
+          "type": "2連単",
+          "combination": "1-2",
+          "amount": 300,
+          "estimated_probability": 0.2157
         }
       ],
       "caution_flagged": true,
@@ -101,19 +107,19 @@
         {
           "type": "2連単",
           "combination": "1-3",
-          "amount": 1300,
+          "amount": 1200,
           "estimated_probability": 0.332
         },
         {
           "type": "2連単",
           "combination": "1-2",
-          "amount": 900,
+          "amount": 800,
           "estimated_probability": 0.237
         },
         {
           "type": "2連単",
           "combination": "3-1",
-          "amount": 400,
+          "amount": 300,
           "estimated_probability": 0.0978
         },
         {
@@ -121,6 +127,12 @@
           "combination": "1-5",
           "amount": 300,
           "estimated_probability": 0.0799
+        },
+        {
+          "type": "2連単",
+          "combination": "1-4",
+          "amount": 300,
+          "estimated_probability": 0.0697
         },
         {
           "type": "3連単",
@@ -195,20 +207,26 @@
         {
           "type": "3連単",
           "combination": "1-3-2",
-          "amount": 800,
+          "amount": 600,
           "estimated_probability": 0.075
         },
         {
           "type": "3連単",
           "combination": "1-3-4",
-          "amount": 800,
+          "amount": 600,
           "estimated_probability": 0.0727
         },
         {
           "type": "3連単",
           "combination": "1-2-3",
-          "amount": 700,
+          "amount": 600,
           "estimated_probability": 0.0704
+        },
+        {
+          "type": "3連単",
+          "combination": "1-4-3",
+          "amount": 500,
+          "estimated_probability": 0.0675
         }
       ],
       "caution_flagged": false
@@ -241,13 +259,13 @@
         {
           "type": "3連単",
           "combination": "1-3-4",
-          "amount": 600,
+          "amount": 500,
           "estimated_probability": 0.1124
         },
         {
           "type": "3連単",
           "combination": "1-4-3",
-          "amount": 500,
+          "amount": 400,
           "estimated_probability": 0.1024
         },
         {
@@ -259,8 +277,14 @@
         {
           "type": "3連単",
           "combination": "1-2-3",
-          "amount": 400,
+          "amount": 300,
           "estimated_probability": 0.074
+        },
+        {
+          "type": "3連単",
+          "combination": "1-4-2",
+          "amount": 300,
+          "estimated_probability": 0.0661
         },
         {
           "type": "2連単",
@@ -336,13 +360,13 @@
         {
           "type": "3連単",
           "combination": "1-3-2",
-          "amount": 900,
+          "amount": 700,
           "estimated_probability": 0.1141
         },
         {
           "type": "3連単",
           "combination": "1-2-3",
-          "amount": 900,
+          "amount": 700,
           "estimated_probability": 0.1117
         },
         {
@@ -350,6 +374,12 @@
           "combination": "1-3-4",
           "amount": 500,
           "estimated_probability": 0.0677
+        },
+        {
+          "type": "3連単",
+          "combination": "1-2-4",
+          "amount": 400,
+          "estimated_probability": 0.0634
         }
       ],
       "caution_flagged": false
@@ -406,20 +436,26 @@
         {
           "type": "3連単",
           "combination": "1-2-4",
-          "amount": 800,
+          "amount": 700,
           "estimated_probability": 0.1133
         },
         {
           "type": "3連単",
           "combination": "1-2-6",
-          "amount": 700,
+          "amount": 600,
           "estimated_probability": 0.0895
         },
         {
           "type": "3連単",
           "combination": "1-4-2",
-          "amount": 700,
+          "amount": 500,
           "estimated_probability": 0.0892
+        },
+        {
+          "type": "3連単",
+          "combination": "1-6-2",
+          "amount": 400,
+          "estimated_probability": 0.0662
         }
       ],
       "caution_flagged": false
@@ -458,20 +494,26 @@
         {
           "type": "3連単",
           "combination": "1-4-5",
-          "amount": 500,
+          "amount": 400,
           "estimated_probability": 0.0846
         },
         {
           "type": "3連単",
           "combination": "1-5-2",
-          "amount": 500,
+          "amount": 400,
           "estimated_probability": 0.0811
         },
         {
           "type": "3連単",
           "combination": "1-2-5",
-          "amount": 400,
+          "amount": 300,
           "estimated_probability": 0.0687
+        },
+        {
+          "type": "3連単",
+          "combination": "1-5-3",
+          "amount": 300,
+          "estimated_probability": 0.0567
         },
         {
           "type": "2連単",
@@ -522,7 +564,7 @@
         {
           "type": "3連単",
           "combination": "1-2-4",
-          "amount": 700,
+          "amount": 500,
           "estimated_probability": 0.1495
         },
         {
@@ -542,6 +584,12 @@
           "combination": "1-3-2",
           "amount": 300,
           "estimated_probability": 0.0768
+        },
+        {
+          "type": "3連単",
+          "combination": "1-2-6",
+          "amount": 200,
+          "estimated_probability": 0.0495
         },
         {
           "type": "2連単",
