@@ -24,6 +24,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write   # gh workflow run で依存ワークフローを明示的に起動するために必要
 
 jobs:
   auto-merge:
@@ -137,6 +138,24 @@ jobs:
           else
             echo "ok=false" >> "$GITHUB_OUTPUT"
             echo "::error::mainへのpushに失敗しました(fast-forward不可。mainが分岐している可能性があります)"
+          fi
+
+      - name: Trigger dependent workflows (GITHUB_TOKEN pushes don't fire push triggers)
+        # GitHub Actionsの仕様上、GITHUB_TOKENによるpushは他のワークフローのpushトリガーを
+        # 起動しない(無限ループ防止のための既知の制限)。そのため、このジョブがfast-forward
+        # 成功させても、candidates_notify.yml(data/latest/candidates.jsonへのpushが
+        # トリガー)は自動発火しない。ここでgh workflow runにより明示的に起動する。
+        if: steps.push.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          if grep -qx "data/latest/candidates.json" /tmp/changed_files.txt; then
+            echo "data/latest/candidates.jsonが変更されたため、依存ワークフローを明示的に起動します"
+            gh workflow run candidates_notify.yml --ref main
+            gh workflow run candidates_insurance_check.yml --ref main
+          else
+            echo "data/latest/candidates.jsonは変更されていないため、依存ワークフローの起動をスキップします"
           fi
 
       - name: Open fallback PR for manual review
