@@ -9,14 +9,14 @@ name: Candidates notification email
 #   NOTIFY_EMAIL_TO     … 送信先メールアドレス(自分宛でも可)
 #
 # rank/budget/bets(scripts/generate_bets.py)はこのジョブの中だけで計算し、リポジトリには
-# コミットしない。このワークフロー自体がdata/candidates.jsonへのpushをトリガーにしているため、
+# コミットしない。このワークフロー自体がdata/latest/candidates.jsonへのpushをトリガーにしているため、
 # ここでコミット・pushすると自分自身を再度トリガーしてしまい、メールが二重に送られる。
 
 on:
   push:
     branches: [main]
     paths:
-      - "data/candidates.json"
+      - "data/latest/candidates.json"
   workflow_dispatch: {}
 
 jobs:

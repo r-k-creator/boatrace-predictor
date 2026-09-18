@@ -52,12 +52,13 @@ import axes
 import predict
 import train_model
 from common import (
+    ARCHIVE_DIR,
+    ARCHIVE_STATS_DIR,
     DATA_DIR,
     PREVIEWS_DIR,
     PROGRAMS_DIR,
     RESULTS_ENTRIES_CSV,
     RESULTS_RACES_CSV,
-    STATS_DIR,
     ensure_dirs,
     is_night_race,
     parse_date,
@@ -445,7 +446,7 @@ def summarize_axis_with_naive(rows, axis_column, key_fn):
 
 def run_axis_reports(variant, eval_rows):
     axes.assign_confidence_quintile(eval_rows)
-    out_dir = os.path.join(STATS_DIR, f"backtest_axes_{variant}")
+    out_dir = os.path.join(ARCHIVE_STATS_DIR, f"backtest_axes_{variant}")
     for filename, axis_column, key_fn in AXIS_DEFS:
         rows = summarize_axis_with_naive(eval_rows, axis_column, key_fn)
         axes.write_csv(
@@ -732,8 +733,8 @@ def main():
     comparison_rows = []
     for v in VARIANTS:
         rows = eval_rows[v]
-        axes.write_csv(os.path.join(DATA_DIR, f"backtest_evaluations_{v}.csv"), rows, BT_EVAL_FIELDS)
-        axes.write_csv(os.path.join(DATA_DIR, f"backtest_daily_summary_{v}.csv"), daily_rows[v], BT_SUMMARY_FIELDS)
+        axes.write_csv(os.path.join(ARCHIVE_DIR, f"backtest_evaluations_{v}.csv"), rows, BT_EVAL_FIELDS)
+        axes.write_csv(os.path.join(ARCHIVE_DIR, f"backtest_daily_summary_{v}.csv"), daily_rows[v], BT_SUMMARY_FIELDS)
         run_axis_reports(v, rows)
 
         n = len(rows)
@@ -752,7 +753,7 @@ def main():
         })
 
     axes.write_csv(
-        os.path.join(DATA_DIR, "backtest_variant_comparison.csv"),
+        os.path.join(ARCHIVE_DIR, "backtest_variant_comparison.csv"),
         comparison_rows,
         ["variant", "races_evaluated", "races_with_model", "hit_top1_rate", "hit_top2_rate", "avg_brier_score"],
     )
@@ -761,7 +762,7 @@ def main():
     for row in comparison_rows:
         print(f"       {row['variant']}: hit1={row['hit_top1_rate']} hit2={row['hit_top2_rate']} "
               f"brier={row['avg_brier_score']} (n={row['races_with_model']})")
-    print(f"       -> {os.path.join(DATA_DIR, 'backtest_variant_comparison.csv')}")
+    print(f"       -> {os.path.join(ARCHIVE_DIR, 'backtest_variant_comparison.csv')}")
 
     # --- パターンcの本番採用判定 ---
     recent = {v: recent_metrics(eval_rows[v]) for v in VARIANTS}

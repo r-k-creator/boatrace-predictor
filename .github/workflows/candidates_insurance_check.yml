@@ -25,14 +25,14 @@ jobs:
       - name: Check candidates.json was updated today (JST)
         run: |
           TODAY_JST=$(TZ='Asia/Tokyo' date +%Y-%m-%d)
-          if [ ! -f data/candidates.json ]; then
-            echo "::error::data/candidates.json が存在しません(Coworkタスクが実行されていない可能性)"
+          if [ ! -f data/latest/candidates.json ]; then
+            echo "::error::data/latest/candidates.json が存在しません(Coworkタスクが実行されていない可能性)"
             exit 1
           fi
-          LAST_COMMIT_DATE=$(TZ='Asia/Tokyo' git log -1 --date=format-local:%Y-%m-%d --format=%cd -- data/candidates.json)
-          echo "本日(JST): $TODAY_JST / data/candidates.json最終更新(JST): $LAST_COMMIT_DATE"
+          LAST_COMMIT_DATE=$(TZ='Asia/Tokyo' git log -1 --date=format-local:%Y-%m-%d --format=%cd -- data/latest/candidates.json)
+          echo "本日(JST): $TODAY_JST / data/latest/candidates.json最終更新(JST): $LAST_COMMIT_DATE"
           if [ "$LAST_COMMIT_DATE" != "$TODAY_JST" ]; then
-            echo "::error::data/candidates.json が本日($TODAY_JST)更新されていません(最終更新: $LAST_COMMIT_DATE)。Coworkの候補選定タスクをご確認ください。"
+            echo "::error::data/latest/candidates.json が本日($TODAY_JST)更新されていません(最終更新: $LAST_COMMIT_DATE)。Coworkの候補選定タスクをご確認ください。"
             exit 1
           fi
-          echo "OK: data/candidates.json は本日更新されています"
+          echo "OK: data/latest/candidates.json は本日更新されています"

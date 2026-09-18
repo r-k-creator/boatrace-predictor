@@ -27,15 +27,15 @@ import json
 import os
 
 from common import (
-    DATA_DIR,
+    LATEST_DIR,
     RESULTS_ENTRIES_CSV,
     RESULTS_RACES_CSV,
     append_rows,
     read_existing_dates,
 )
 
-CANDIDATES_JSON = os.path.join(DATA_DIR, "candidates.json")
-CANDIDATES_EVAL_CSV = os.path.join(DATA_DIR, "candidates_evaluations.csv")
+CANDIDATES_JSON = os.path.join(LATEST_DIR, "candidates.json")
+CANDIDATES_EVAL_CSV = os.path.join(LATEST_DIR, "candidates_evaluations.csv")
 REPORT_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "candidates_evaluation_report.txt",

@@ -91,8 +91,9 @@ jobs:
         if: steps.diff.outputs.skip != 'true'
         run: |
           set -eu
-          # 既知の自動生成データファイルのみ許可(fail-closed: 1つでも外れたら不許可)
-          ALLOWED_REGEX='^(data/candidates\.json|data/stats/.*|data/backtest_.*)$'
+          # 既知の自動生成データファイルのみ許可(fail-closed: 1つでも外れたら不許可)。
+          # 2026-09-18のdata/archive・data/latest分割に合わせてパスを更新済み。
+          ALLOWED_REGEX='^(data/latest/candidates\.json|data/latest/stats/.*|data/archive/stats/.*|data/archive/backtest_.*)$'
           DISALLOWED="$(grep -Ev "$ALLOWED_REGEX" /tmp/changed_files.txt || true)"
 
           if [ -z "$(cat /tmp/changed_files.txt)" ]; then

@@ -82,31 +82,35 @@ Public/Privateどちらでも構いません(データを他人に見られた�
 - `predictions/{YYYYMMDD}.csv` … その日のレースごとの予想スコア・予想順位・使用モデル(`model_used`列)。
   締切が近づいて`refresh_near_race.py`が更新したレースは、`actual_course_number`(実際の進入コース)・
   `exhibition_time`(展示タイム)・`updated_at`(更新時刻)も入り、`model_used`列に「+直前情報」と付きます
-- `data/results_races.csv` … レース単位の結果(天候・決まり手・払戻金など)。天候系カラムはAPIの
+- `data/archive/results_races.csv` … レース単位の結果(天候・決まり手・払戻金など)。天候系カラムはAPIの
   生フィールド名をそのまま使っています(`race_wind` / `race_wind_direction_number` / `race_wave` /
   `race_weather_number` / `race_temperature` / `race_water_temperature` / `race_technique_number`)
-- `data/results_entries.csv` … 出走艇単位の結果。`entry_course_actual`(実際の進入コース)・
+- `data/archive/results_entries.csv` … 出走艇単位の結果。`entry_course_actual`(実際の進入コース)・
   `entry_course_program`(出走表時点=艇番号ベースの想定進入コース)・`motor_2rate` / `motor_3rate`
   (モーター2/3連率、同日の出走表データから補完)を含みます
-- `data/stats/course_stats.csv` … コース番号別の勝率・平均払戻金
-- `data/stats/racer_stats.csv` … 選手別の勝率
-- `data/stats/model.json` … 学習済みロジスティック回帰の係数(中身を見れば「何が勝敗に効いているか」がそのまま分かります)
-- `data/evaluations.csv` … レース単位の振り返り結果(1レース=1行)。モデルが1位に予想した艇を主語に、
+- `data/latest/stats/course_stats.csv` … コース番号別の勝率・平均払戻金
+- `data/latest/stats/racer_stats.csv` … 選手別の勝率
+- `data/latest/stats/model.json` … 学習済みロジスティック回帰の係数(中身を見れば「何が勝敗に効いているか」がそのまま分かります)
+- `data/archive/evaluations.csv` … レース単位の振り返り結果(1レース=1行)。モデルが1位に予想した艇を主語に、
   その艇の実際の進入コース・スタートタイミング・モーター成績、レースの格(`grade`)・昼夜(`is_night`、
   締切時刻からの推定)・天候、的中結果(`hit_top1` / `hit_top2` / `brier_score`)などを記録します。
   カラムはバケット化(「風速帯:中」等)せず、APIの生の値をそのまま保存する方針にしており、
   集計・グラフ化は分析側(Excel・スクリプト)で行う想定です
-- `data/stats/axes/*.csv` … `evaluate.py`実行のたびに蓄積済み全データから再計算される軸別集計
+- `data/archive/stats/axes/*.csv` … `evaluate.py`実行のたびに蓄積済み全データから再計算される軸別集計
   (`scripts/axes.py`)。`single_*.csv`はモデルの確信度5分位・場・進入コース・決まり手・グレード・
   昼夜・天候・風速帯/風向/波高帯・モーター2連率帯ごとの的中率、`cross_*.csv`は選手×場×進入コース・
   選手×決まり手(勝った時の決まり手分布)・選手×展示タイム順位×着順・選手×スタートタイミング
   (平均+分散)・場×進入コース×風速帯/風向(イン逃げ率つき)などの掛け合わせ集計です。
   いずれもサンプル数が少ない行は`low_sample`列で1が立ちます(除外はせず参考値として残しています)
 
+> `data/` は2026-09-18に `archive/`(過去の生データ・大容量の蓄積/分析結果、普段は参照不要)と
+> `latest/`(直近の候補・予想・評価結果・現在有効なモデル)に分割しました。全体像は
+> [docs/STATUS.md](docs/STATUS.md) を参照してください。
+
 ### 既存データのスキーマ移行
 
-過去に運用して `data/results_races.csv` / `data/results_entries.csv` が旧カラム名(`wind` /
-`course_number` 等)のまま残っている場合は、以下を一度だけ実行すると新スキーマに移行できます
+過去に運用して `data/archive/results_races.csv` / `data/archive/results_entries.csv` が旧カラム名
+(`wind` / `course_number` 等)のまま残っている場合は、以下を一度だけ実行すると新スキーマに移行できます
 (バックアップとして `*.csv.bak` を残します。複数回実行しても安全です)。
 
 ```bash
@@ -120,7 +124,7 @@ python scripts/migrate_csv_schema.py
 
 CSVはGitHub上でそのまま見られますし、「Download raw file」でダウンロードしてExcelで
 開くこともできます。以前お話しした「コース別回収率」「決まり手別」などの分析は、
-`data/results_entries.csv` と `data/results_races.csv` を使ってそのまま実践できます。
+`data/archive/results_entries.csv` と `data/archive/results_races.csv` を使ってそのまま実践できます。
 
 ## バックテスト(ウォークフォワード検証)
 
@@ -130,7 +134,7 @@ CSVはGitHub上でそのまま見られますし、「Download raw file」でダ
 常に予想する」ナイーブベースラインも同じ「過去のみ使用」ルールで計算し、モデルが
 それを本当に上回っているかを比較できます。
 
-対象期間(デフォルト2025-05-01〜)のデータが `data/programs/` `data/results_*.csv` に
+対象期間(デフォルト2025-05-01〜)のデータが `data/archive/programs/` `data/archive/results_*.csv` に
 揃っている必要があります。日次運用は「今日」「昨日」しか取得しないため、長期間を
 検証するには先に一括取得が必要です:
 
@@ -141,9 +145,10 @@ python backtest.py                          # 2025-05-01〜取得済みデータ
 python backtest.py 2025-05-01 2025-08-31    # 期間を指定して検証
 ```
 
-結果は `data/backtest_evaluations.csv`(レース単位)・`data/backtest_daily_summary.csv`
-(日別サマリー、モデル vs ナイーブ)・`data/stats/backtest_axes/single_*.csv`
-(Phase3と同じ軸でモデル/ナイーブを横並び集計)に出力されます。
+結果は `data/archive/backtest_evaluations_{a,b,c}.csv`(レース単位)・
+`data/archive/backtest_daily_summary_{a,b,c}.csv`(日別サマリー、モデル vs ナイーブ)・
+`data/archive/stats/backtest_axes_{a,b,c}/single_*.csv`(Phase3と同じ軸でモデル/ナイーブを横並び集計)
+に出力されます。
 
 ## 手元(ローカルPC)で試したい場合
 

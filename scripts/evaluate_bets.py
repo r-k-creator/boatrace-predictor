@@ -24,7 +24,7 @@ evening_results.yml / evening_results_retry.yml から、generate_bets.py の後
 """
 import os
 
-from common import DATA_DIR, append_rows, read_existing_dates
+from common import LATEST_DIR, append_rows, read_existing_dates
 from evaluate_candidates import (
     format_miss_reason,
     kimarite_label,
@@ -32,7 +32,7 @@ from evaluate_candidates import (
     load_results_for_date,
 )
 
-BETS_EVAL_CSV = os.path.join(DATA_DIR, "bets_evaluations.csv")
+BETS_EVAL_CSV = os.path.join(LATEST_DIR, "bets_evaluations.csv")
 REPORT_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "bets_evaluation_report.txt",

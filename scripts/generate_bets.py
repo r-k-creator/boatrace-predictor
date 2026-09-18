@@ -74,9 +74,9 @@ import math
 import os
 from collections import defaultdict
 
-from common import DATA_DIR, PREDICTIONS_DIR
+from common import LATEST_DIR, PREDICTIONS_DIR
 
-CANDIDATES_JSON = os.path.join(DATA_DIR, "candidates.json")
+CANDIDATES_JSON = os.path.join(LATEST_DIR, "candidates.json")
 
 # --- ランクしきい値(スクリプト冒頭のコメント参照。data/backtest_evaluations_b.csv
 #     から実測したpredicted_probability帯ごとのhit_top1_rateに基づく) ---

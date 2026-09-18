@@ -40,19 +40,27 @@ PROGRAMS_BASE = "https://boatraceopenapi.github.io/programs/v2"
 PREVIEWS_BASE = "https://boatraceopenapi.github.io/previews/v2"
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
-STATS_DIR = os.path.join(DATA_DIR, "stats")
-PROGRAMS_DIR = os.path.join(DATA_DIR, "programs")
-PREVIEWS_DIR = os.path.join(DATA_DIR, "previews")
 PREDICTIONS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "predictions"
 )
 
-RESULTS_RACES_CSV = os.path.join(DATA_DIR, "results_races.csv")
-RESULTS_ENTRIES_CSV = os.path.join(DATA_DIR, "results_entries.csv")
+# data/ 配下は2026-09-18に archive/(過去の生データ・大容量の蓄積/分析結果、普段は
+# 参照不要)と latest/(直近の候補・予想・評価結果・現在有効なモデル)に分割した。
+# コンテキスト消費を抑えるための整理で、詳細は docs/STATUS.md 参照。
+ARCHIVE_DIR = os.path.join(DATA_DIR, "archive")
+LATEST_DIR = os.path.join(DATA_DIR, "latest")
+
+STATS_DIR = os.path.join(LATEST_DIR, "stats")            # model.json/course_stats/racer_stats(現在有効な状態、小容量)
+ARCHIVE_STATS_DIR = os.path.join(ARCHIVE_DIR, "stats")    # axes/・backtest_axes_*/(過去の分析結果、大容量)
+PROGRAMS_DIR = os.path.join(ARCHIVE_DIR, "programs")
+PREVIEWS_DIR = os.path.join(ARCHIVE_DIR, "previews")
+
+RESULTS_RACES_CSV = os.path.join(ARCHIVE_DIR, "results_races.csv")
+RESULTS_ENTRIES_CSV = os.path.join(ARCHIVE_DIR, "results_entries.csv")
 COURSE_STATS_CSV = os.path.join(STATS_DIR, "course_stats.csv")
 RACER_STATS_CSV = os.path.join(STATS_DIR, "racer_stats.csv")
-EVALUATIONS_CSV = os.path.join(DATA_DIR, "evaluations.csv")
-AXES_DIR = os.path.join(STATS_DIR, "axes")
+EVALUATIONS_CSV = os.path.join(ARCHIVE_DIR, "evaluations.csv")
+AXES_DIR = os.path.join(ARCHIVE_STATS_DIR, "axes")
 
 
 REQUEST_WAIT_RANGE_SEC = (0.3, 0.5)  # 連続リクエスト間の待機時間(サーバーへの配慮のため)
@@ -97,7 +105,9 @@ def previews_url_for_date(date_obj):
 
 def ensure_dirs():
     os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(LATEST_DIR, exist_ok=True)
     os.makedirs(STATS_DIR, exist_ok=True)
+    os.makedirs(ARCHIVE_DIR, exist_ok=True)
     os.makedirs(PROGRAMS_DIR, exist_ok=True)
     os.makedirs(PREVIEWS_DIR, exist_ok=True)
     os.makedirs(PREDICTIONS_DIR, exist_ok=True)

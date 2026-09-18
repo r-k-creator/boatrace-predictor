@@ -14,14 +14,14 @@ data/backtest_evaluations_c.csv 自体には「どちらを使ったか」のフ
 import csv
 import os
 
-from common import DATA_DIR
+from common import ARCHIVE_DIR, DATA_DIR
 from backtest import load_previews_by_race
 
 VARIANTS = ("a", "b", "c")
 
 
 def load_eval_rows(variant):
-    path = os.path.join(DATA_DIR, f"backtest_evaluations_{variant}.csv")
+    path = os.path.join(ARCHIVE_DIR, f"backtest_evaluations_{variant}.csv")
     with open(path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     for r in rows:

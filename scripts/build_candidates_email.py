@@ -20,10 +20,10 @@ betsは種類ごとにグループ化した上で全点表示する(以前は種
 import json
 import os
 
-from common import DATA_DIR, load_program_index
+from common import LATEST_DIR, load_program_index
 from generate_bets import CAUTION_KEYWORDS, load_predictions_for_date
 
-CANDIDATES_JSON = os.path.join(DATA_DIR, "candidates.json")
+CANDIDATES_JSON = os.path.join(LATEST_DIR, "candidates.json")
 OUTPUT_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "candidates_email_body.txt",

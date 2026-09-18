@@ -9,7 +9,7 @@
 
 ## ランクしきい値(SS/S/A/B/C)
 
-`predicted_probability`(推奨艇の予測勝率)に対するしきい値。`data/backtest_evaluations_b.csv`
+`predicted_probability`(推奨艇の予測勝率)に対するしきい値。`data/archive/backtest_evaluations_b.csv`
 (504日ウォークフォワード検証、天候加法項パターン=本番モデル)の実測`hit_top1_rate`から
 逆算した値で、勘で決めた数字ではありません。
 
@@ -82,20 +82,20 @@
 `evaluate_candidates.py` → `generate_bets.py` → `evaluate_bets.py` → コミット → メール送信。
 
 - `fetch_results.py`が2連単・3連単・3連複の払戻(`exacta_*`/`trifecta_*`/`trio_*`)を
-  `data/results_races.csv`に保存するよう拡張済み(過去77,940行は空カラムのまま、
+  `data/archive/results_races.csv`に保存するよう拡張済み(過去77,940行は空カラムのまま、
   遡って再取得はしていない)。
 - `evaluate_bets.py`が実際の買い目(`generate_bets.py`が生成したもの)を上記の払戻データと
-  突き合わせて的中判定・回収額を計算し、`data/bets_evaluations.csv`に1ベット=1行で蓄積。
+  突き合わせて的中判定・回収額を計算し、`data/latest/bets_evaluations.csv`に1ベット=1行で蓄積。
   これがStage 2(下記)の分析対象データになる。
-- **二重送信防止の重要な仕組み**: 夜間ジョブの中で`generate_bets.py`が`data/candidates.json`
-  をローカルに書き換えるが、`candidates_notify.yml`は「`data/candidates.json`へのpush」を
+- **二重送信防止の重要な仕組み**: 夜間ジョブの中で`generate_bets.py`が`data/latest/candidates.json`
+  をローカルに書き換えるが、`candidates_notify.yml`は「`data/latest/candidates.json`へのpush」を
   トリガーにしているため、これをそのままコミットすると朝の候補メールが深夜に再送されて
   しまう。そのため夜間ジョブのコミットステップでは必ず
-  `git restore --staged data/candidates.json`を実行してから`git diff --cached`を確認する。
+  `git restore --staged data/latest/candidates.json`を実行してから`git diff --cached`を確認する。
 
 ## メール本文の整形(`candidates_notify.yml`)
 
-`scripts/build_candidates_email.py`が`data/candidates.json`の生JSONを人間向けプレーン
+`scripts/build_candidates_email.py`が`data/latest/candidates.json`の生JSONを人間向けプレーン
 テキストに変換(競艇場名マッピング、ランク・予算・注意フラグを見出しに、確率差・
 根拠reasons(短縮版・警告語重複は除外)・買い目を表示)。
 
@@ -126,10 +126,10 @@ Stage 1が安定稼働したと判断されてから着手する前提で、ま�
 1. **較正チェック**: 買い目種類別(2連単/3連単/3連複)に、Harville公式による`estimated_probability`
    と実測的中率を比較。乖離が大きければHarville計算のキャリブレーションを見直す
    (自動補正ではなく「見直す」判断材料として使う)。
-2. **ランク×買い目種類別の累積収支**: `data/bets_evaluations.csv`から投資・回収・回収率を集計。
+2. **ランク×買い目種類別の累積収支**: `data/latest/bets_evaluations.csv`から投資・回収・回収率を集計。
 3. **予算配分の自動調整**: 各ランク×買い目種類の組み合わせについて、統計的に意味のある
    サンプル数(目安50件以上)が溜まるまでは**記録・レポートのみ**で、予算配分は変更しない。
-   調整を行った場合は`data/stats/budget_adjustments_log.csv`にいつ・何を根拠に・何を
+   調整を行った場合は`data/latest/stats/budget_adjustments_log.csv`にいつ・何を根拠に・何を
    変えたかを記録する。
 4. **SS閾値の優先的再検証**(上記「SSランクについて」参照)。
 
@@ -142,7 +142,7 @@ Stage 1が安定稼働したと判断されてから着手する前提で、ま�
 - `fetch_results.py`は引数省略時「昨日」(`today_jst()-1`)の結果を取得する設計
   (`evaluate.py`/`train_model.py`の日次再学習も同じく「昨日」基準で、これ自体は
   元々の一貫した設計であり問題ない)。
-- 一方`data/candidates.json`は毎朝「当日」の日付で上書きされる(アーカイブされない)。
+- 一方`data/latest/candidates.json`は毎朝「当日」の日付で上書きされる(アーカイブされない)。
 - そのため夜間ジョブが当日22:00/23:00 JSTに走っても、`results_races.csv`には
   「当日」の行がまだ無く、`evaluate_candidates.py`/`evaluate_bets.py`が
   「結果データがまだありません」で正常終了(exit 0)しつつ何も出力しない
@@ -161,3 +161,5 @@ Stage 1が安定稼働したと判断されてから着手する前提で、ま�
 
 - 2026-09-17: 初版作成。上記の内容はすべてこの日までの会話・実装に基づく。
 - 2026-09-17: メール未送信不具合(日付ズレ)の原因と修正を追記。
+- 2026-09-18: `data/archive`・`data/latest`分割に合わせて本文中のパス表記を更新
+  (内容自体は不変)。全体像は[docs/STATUS.md](STATUS.md)を参照。
