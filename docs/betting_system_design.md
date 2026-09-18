@@ -7,6 +7,11 @@
 
 関連: [README.md](../README.md)(システム全体)、[backtest_conclusion.md](../backtest_conclusion.md)(モデルのパターン選定)
 
+**運用ルール(2026-09-18追加)**: 複数の仮説がある調査を行う際は、調査結果だけでなく、
+その後の議論を経てたどり着いた結論・判断理由もこのログに記録すること。「何が起きたか」
+だけでなく「どういう議論を経て、なぜその結論に至ったか」を残すことで、後から見返した際に
+判断の背景を追えるようにする。
+
 ## ランクしきい値(SS/S/A/B/C)
 
 `predicted_probability`(推奨艇の予測勝率)に対するしきい値。`data/archive/backtest_evaluations_b.csv`
