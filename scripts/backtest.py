@@ -49,6 +49,7 @@ import warnings
 from collections import defaultdict
 
 import axes
+import generate_bets
 import predict
 import train_model
 from common import (
@@ -64,7 +65,10 @@ from common import (
     parse_date,
 )
 
-VARIANTS = ("a", "b", "c")
+# BACKTEST_VARIANTS環境変数で対象パターンを絞れる(デフォルトはa/b/c全部、従来通り)。
+# Sランクシミュレーション用にbだけ再実行したい場合などに使う(日次モデル再学習は
+# パターンごとに行うため、対象を絞ればその分だけ実行時間も短縮できる)。
+VARIANTS = tuple(os.environ.get("BACKTEST_VARIANTS", "a,b,c").split(","))
 NON_WEATHER_COLUMNS = [c for c in train_model.FEATURE_COLUMNS if not c.startswith("race_")]
 WEATHER_COLUMNS = [c for c in train_model.FEATURE_COLUMNS if c.startswith("race_")]
 
@@ -89,6 +93,16 @@ BT_SUMMARY_FIELDS = [
     "race_date", "races", "used_model", "training_races_so_far",
     "model_hit_top1_rate", "model_hit_top2_rate", "model_avg_brier",
     "naive_hit_top1_rate", "naive_races_evaluated",
+]
+
+# Sランク全賭けシミュレーション用: パターンbで1着候補確率がS閾値以上のレースだけ、
+# 6艇全員分の確率を残す(全レース×6艇を残すと461,250行になり不要に大きいため、
+# シミュレーション対象範囲に絞る。日次モデル再学習のコスト自体はレースの絞り込みでは
+# 減らせないので、ここでの絞り込みは出力サイズのみの最適化)。
+FULL_PROBS_VARIANT = "b"
+FULL_PROBS_MIN_PROBABILITY = dict(generate_bets.RANK_THRESHOLDS)["S"]
+BT_FULL_PROBS_FIELDS = [
+    "race_date", "venue_code", "race_number", "boat_number", "probability", "is_top1",
 ]
 
 
@@ -500,6 +514,7 @@ def main():
 
     eval_rows = {v: [] for v in VARIANTS}
     daily_rows = {v: [] for v in VARIANTS}
+    full_probs_rows = []
 
     for date_str in candidate_dates:
         date_compact = date_str.replace("-", "")
@@ -575,6 +590,17 @@ def main():
                 top1_row, top1_score = scored[0]
                 top2_row = scored[1][0] if len(scored) > 1 else None
 
+                if v == FULL_PROBS_VARIANT and (top1_score / total) >= FULL_PROBS_MIN_PROBABILITY:
+                    for row, score in scored:
+                        full_probs_rows.append({
+                            "race_date": date_str,
+                            "venue_code": stadium_number,
+                            "race_number": race_number,
+                            "boat_number": row["boat_number"],
+                            "probability": round(score / total, 4),
+                            "is_top1": 1 if row["boat_number"] == top1_row["boat_number"] else 0,
+                        })
+
                 hit_top1 = 1 if top1_row["boat_number"] == actual_rank_1_racer else 0
                 hit_top2 = 1 if (
                     top1_row["boat_number"] == actual_rank_1_racer
@@ -645,11 +671,13 @@ def main():
                     "naive_races_evaluated": len(naive_vals),
                 })
 
-        if day_eval_rows["b"]:
-            n = len(day_eval_rows["b"])
+        progress_variant = "b" if "b" in VARIANTS else VARIANTS[0]
+        if day_eval_rows[progress_variant]:
+            n = len(day_eval_rows[progress_variant])
             hits = {v: sum(r["hit_top1"] for r in day_eval_rows[v]) / len(day_eval_rows[v]) for v in VARIANTS}
+            hits_str = " ".join(f"{v}={hits[v]*100:.1f}%" for v in VARIANTS)
             print(f"[{date_str}] races={n} model={'ON' if models else 'fallback'} (train={n_races_so_far}) "
-                  f"hit1: a={hits['a']*100:.1f}% b={hits['b']*100:.1f}% c={hits['c']*100:.1f}%")
+                  f"hit1: {hits_str}")
 
         # --- Dのデータを「過去」として蓄積する(D+1以降の学習・ナイーブ統計にのみ使われる) ---
         # 2パスに分ける: (1)Dの生の値を集めて統計(stat_sums等)を先に更新し、
@@ -730,6 +758,14 @@ def main():
             if is_win:
                 venue_course_stats[vkey]["wins"] += 1
 
+    axes.write_csv(
+        os.path.join(ARCHIVE_DIR, f"backtest_full_probs_{FULL_PROBS_VARIANT}.csv"),
+        full_probs_rows, BT_FULL_PROBS_FIELDS,
+    )
+    print(f"[info] Sランク以上(predicted_probability>={FULL_PROBS_MIN_PROBABILITY})の"
+          f"全艇分確率を{len(full_probs_rows)}行 -> "
+          f"{os.path.join(ARCHIVE_DIR, f'backtest_full_probs_{FULL_PROBS_VARIANT}.csv')}")
+
     comparison_rows = []
     for v in VARIANTS:
         rows = eval_rows[v]
@@ -786,13 +822,17 @@ def main():
     else:
         print("[判定] 直近ウィンドウの学習済みデータが不足しており判定できませんでした")
 
-    repo_root = os.path.dirname(DATA_DIR)
-    conclusion_path = os.path.join(repo_root, "backtest_conclusion.md")
-    write_conclusion_md(
-        conclusion_path, comparison_rows, recent, judgment,
-        (candidate_dates[0], candidate_dates[-1]), len(candidate_dates),
-    )
-    print(f"       -> {conclusion_path}")
+    if set(VARIANTS) >= {"a", "b", "c"}:
+        repo_root = os.path.dirname(DATA_DIR)
+        conclusion_path = os.path.join(repo_root, "backtest_conclusion.md")
+        write_conclusion_md(
+            conclusion_path, comparison_rows, recent, judgment,
+            (candidate_dates[0], candidate_dates[-1]), len(candidate_dates),
+        )
+        print(f"       -> {conclusion_path}")
+    else:
+        print(f"[info] VARIANTS={VARIANTS}(a/b/c全部ではない)のため、"
+              f"backtest_conclusion.mdの上書きはスキップしました")
 
 
 if __name__ == "__main__":
