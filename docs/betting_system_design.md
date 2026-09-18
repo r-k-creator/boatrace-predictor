@@ -118,6 +118,13 @@
   初回実行がそれぞれ約4.5時間・4時間遅延したため、分を0以外(22:03 JST / 23:07 JST)に
   ずらして緩和した。他のワークフロー(`morning_program.yml`等)も同様に分=0のままなので、
   同じ遅延リスクが残っている(未対応、必要になったら同様に調整)。
+- **GITHUB_TOKENによるpushは他のワークフローのpushトリガーを起動しない**(無限ループ防止の
+  ための既知の制限)。`auto_merge_data_branches.yml`が`GITHUB_TOKEN`でmainへfast-forward
+  pushしても、`candidates_notify.yml`(`data/latest/candidates.json`へのpushがトリガー)は
+  自動発火しない。2026-09-18に、fast-forward成功直後に`gh workflow run candidates_notify.yml`
+  /`gh workflow run candidates_insurance_check.yml`を明示的に呼ぶステップを追加して対応
+  (candidates.jsonが変更ファイルに含まれる場合のみ)。ジョブの`permissions`に
+  `actions: write`が必要。
 
 ## Stage 2(学習機能、未着手)
 
@@ -163,3 +170,5 @@ Stage 1が安定稼働したと判断されてから着手する前提で、ま�
 - 2026-09-17: メール未送信不具合(日付ズレ)の原因と修正を追記。
 - 2026-09-18: `data/archive`・`data/latest`分割に合わせて本文中のパス表記を更新
   (内容自体は不変)。全体像は[docs/STATUS.md](STATUS.md)を参照。
+- 2026-09-18: `auto_merge_data_branches.yml`経由の更新でメールが発火しない不具合
+  (GITHUB_TOKENがpushトリガーを起動しない仕様)の原因と修正を追記。
