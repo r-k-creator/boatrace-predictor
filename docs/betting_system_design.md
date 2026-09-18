@@ -92,6 +92,11 @@
   トリガーにしているため、これをそのままコミットすると朝の候補メールが深夜に再送されて
   しまう。そのため夜間ジョブのコミットステップでは必ず
   `git restore --staged data/latest/candidates.json`を実行してから`git diff --cached`を確認する。
+- **「候補レース振り返り」メールは2026-09-18に送信停止**(「本日の収支」メールは継続)。
+  `evaluate_candidates.py`自体(的中率・回収率の計算、`data/latest/candidates_evaluations.csv`
+  への記録)はモデル精度追跡の診断データとして引き続き毎晩実行する。停止したのは
+  `evening_results.yml`/`evening_results_retry.yml`の「Send candidate evaluation email」
+  ステップ(メール送信)のみ。
 
 ## メール本文の整形(`candidates_notify.yml`)
 
@@ -172,3 +177,4 @@ Stage 1が安定稼働したと判断されてから着手する前提で、ま�
   (内容自体は不変)。全体像は[docs/STATUS.md](STATUS.md)を参照。
 - 2026-09-18: `auto_merge_data_branches.yml`経由の更新でメールが発火しない不具合
   (GITHUB_TOKENがpushトリガーを起動しない仕様)の原因と修正を追記。
+- 2026-09-18: 「候補レース振り返り」メールの送信を停止(評価処理自体は継続)。
