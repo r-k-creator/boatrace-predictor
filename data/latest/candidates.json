@@ -1,636 +1,142 @@
 {
-  "date": "2026-09-17",
-  "generated_at": "2026-09-16T23:23:56Z",
+  "date": "2026-09-19",
+  "generated_at": "2026-09-18T23:22:45Z",
   "candidates": [
     {
-      "stadium_number": 14,
+      "stadium_number": 17,
       "race_number": 1,
       "recommended_boat": 1,
-      "predicted_probability": 0.7563,
+      "predicted_probability": 0.7947,
       "reasons": [
-        "モデル予想確率75.6%・2位(7.1%)との差+68.5ptで本日全レース中最高の確信度",
-        "【要注意】鳴門はコース1勝率48.7%・イン逃げ率46.9%(過去2,971レース)と全国平均54.8%より-6.1pt低い『イン戦が決まりにくい』水面で、モデルの確信度の高さと当地傾向がやや食い違っている",
-        "選手自身は通算勝利(81勝)の64.2%が逃げによるもので、イン逃げ型としての実力は高い。モーター2連率38.27%(35〜40%帯、同帯通算勝率27.3%/88レース)も高水準",
-        "ただし当地1コースでの実績データが無く(初出走または蓄積不足)、水面傾向との整合性は未検証。全国勝率6.44・通算勝率25.2%(322走81勝)自体は平均以上だが、他候補より慎重な資金配分を推奨"
+        "モデル予想確率79.5%・2位候補との差+72.9ptで本日の全レース中最高の確信度。グレード4「宮島プリンセスカップ」(女子選手限定)というレース特性上、実力差が出やすく1着確率が集中しやすい。",
+        "宮島競艇場のコース1(1号艇)勝率は56.8%(過去3,282レース)で全国平均54.8%(77,070レース)よりやや高く、堅い決着になりやすい水面。",
+        "選手自身の当地コース1実績は3走3勝(100%)だが、サンプルが3走のみのため参考程度(low_sample)。通算101走中64勝(勝率21.3%)・通算64勝中30勝(46.9%)が逃げによるもので、逃げ型としての適性は平均的。",
+        "【留意点】搭載モーターの2連率は36.03%(35〜40%帯)だが、この帯における本人の通算勝率は12.5%(48走、同帯の全国平均勝率17.15%を下回る)。モデルの高確信度の主因はコース1×当地相性というよりも選手個人の総合力(通算勝率21.3%・全国連対率49.5%)にあると見られ、モーター面はやや慎重に見るべき材料。"
       ],
       "sample_sizes": {
-        "venue_course_races": 2971,
+        "venue_course_races": 3282,
+        "venue_course_win_rate": 0.5683,
+        "national_course1_races": 77070,
+        "national_course1_win_rate": 0.5483,
+        "racer_venue_course_races": 3,
+        "racer_venue_course_wins": 3,
+        "racer_venue_course_win_rate": 1.0,
+        "racer_venue_course_low_sample": true,
+        "racer_motor_band_races": 48,
+        "racer_motor_band_win_rate": 0.125,
+        "national_motor_band_races": 94821,
+        "national_motor_band_win_rate": 0.1715,
+        "racer_motor_band_low_sample": false,
+        "racer_kimarite_nige_wins": 30,
+        "racer_kimarite_total_wins": 64,
+        "racer_kimarite_nige_rate": 0.4688,
+        "racer_kimarite_low_sample": false,
+        "racer_overall_races": 300,
+        "racer_overall_win_rate": 0.2133,
+        "model_training_races": 77070
+      }
+    },
+    {
+      "stadium_number": 2,
+      "race_number": 7,
+      "recommended_boat": 1,
+      "predicted_probability": 0.7681,
+      "reasons": [
+        "モデル予想確率76.8%・2位候補との差+69.4ptで本日2番目の確信度。選手の通算勝率35.2%(287走101勝)は今回の4候補中最高で、選手個人の総合力の高さがモデルの確信度に直結している。",
+        "【要注意】戸田競艇場のコース1勝率は42.4%(過去3,108レース)で、全国平均54.8%(77,070レース)より-12.4ptも低い『コース1が決まりにくい』水面(潮の干満・引き波の影響で知られる)。モデルの高確信度と当地の水面傾向がやや食い違っている。",
+        "さらに選手自身は当地(戸田)でのコース1出走実績データが無く(蓄積期間中に戸田コース1での出走記録なし)、水面傾向との整合性は個人データでは検証できない。搭載モーターの2連率58.33%(45%以上帯)はこの帯における本人勝率71.4%(7走、low_sample)と好材料だが、サンプルが薄く参考程度。",
+        "通算101勝中48勝(47.5%)が逃げによるもので、逃げ型としての実力自体は高水準。"
+      ],
+      "sample_sizes": {
+        "venue_course_races": 3108,
+        "venue_course_win_rate": 0.4241,
+        "national_course1_races": 77070,
+        "national_course1_win_rate": 0.5483,
         "racer_venue_course_races": 0,
+        "racer_venue_course_wins": 0,
+        "racer_venue_course_win_rate": null,
         "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 88,
-        "racer_motor_band_low_sample": false,
-        "racer_kimarite_races": 81,
+        "racer_motor_band_races": 7,
+        "racer_motor_band_win_rate": 0.7143,
+        "national_motor_band_races": 41855,
+        "national_motor_band_win_rate": 0.1962,
+        "racer_motor_band_low_sample": true,
+        "racer_kimarite_nige_wins": 48,
+        "racer_kimarite_total_wins": 101,
+        "racer_kimarite_nige_rate": 0.4752,
         "racer_kimarite_low_sample": false,
-        "racer_overall_races": 322,
-        "model_training_races": 76890
-      },
-      "rank": "A",
-      "budget": 3000,
-      "bets": [
-        {
-          "type": "3連単",
-          "combination": "1-5-3",
-          "amount": 400,
-          "estimated_probability": 0.0896
-        },
-        {
-          "type": "3連単",
-          "combination": "1-3-5",
-          "amount": 400,
-          "estimated_probability": 0.0892
-        },
-        {
-          "type": "3連単",
-          "combination": "1-5-2",
-          "amount": 400,
-          "estimated_probability": 0.0887
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-5",
-          "amount": 300,
-          "estimated_probability": 0.0879
-        },
-        {
-          "type": "3連単",
-          "combination": "1-3-2",
-          "amount": 300,
-          "estimated_probability": 0.0873
-        },
-        {
-          "type": "2連単",
-          "combination": "1-5",
-          "amount": 400,
-          "estimated_probability": 0.2203
-        },
-        {
-          "type": "2連単",
-          "combination": "1-3",
-          "amount": 400,
-          "estimated_probability": 0.2179
-        },
-        {
-          "type": "2連単",
-          "combination": "1-2",
-          "amount": 400,
-          "estimated_probability": 0.2157
-        }
-      ],
-      "caution_flagged": true,
-      "rank_without_caution": "S"
-    },
-    {
-      "stadium_number": 8,
-      "race_number": 2,
-      "recommended_boat": 1,
-      "predicted_probability": 0.7399,
-      "reasons": [
-        "モデル予想確率74.0%・2位(11.7%)との差+62.3pt",
-        "常滑はコース1勝率58.2%・イン逃げ率55.6%(過去3,493レース)で全国平均より+3.4pt高く、イン戦が決まりやすい水面",
-        "通算勝利(41勝)の56.1%が逃げによるものでイン逃げ型。当地1コースの実績は4走3勝(75.0%)とサンプルは少ないが好成績(参考程度)",
-        "一方でモーター2連率35.02%(35〜40%帯)の帯別通算勝率は13.3%(60レース)と低めで、モーター面はやや割引材料。選手自身の全国勝率も4.72・通算勝率15.1%(272走41勝)と高くはなく、水面とイン逃げ適性による本命と見るのが妥当"
-      ],
-      "sample_sizes": {
-        "venue_course_races": 3493,
-        "racer_venue_course_races": 4,
-        "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 60,
-        "racer_motor_band_low_sample": false,
-        "racer_kimarite_races": 41,
-        "racer_kimarite_low_sample": false,
-        "racer_overall_races": 272,
-        "model_training_races": 76890
-      },
-      "rank": "S",
-      "budget": 5000,
-      "bets": [
-        {
-          "type": "2連単",
-          "combination": "1-3",
-          "amount": 1600,
-          "estimated_probability": 0.332
-        },
-        {
-          "type": "2連単",
-          "combination": "1-2",
-          "amount": 1100,
-          "estimated_probability": 0.237
-        },
-        {
-          "type": "2連単",
-          "combination": "3-1",
-          "amount": 500,
-          "estimated_probability": 0.0978
-        },
-        {
-          "type": "2連単",
-          "combination": "1-5",
-          "amount": 400,
-          "estimated_probability": 0.0799
-        },
-        {
-          "type": "3連単",
-          "combination": "1-3-2",
-          "amount": 800,
-          "estimated_probability": 0.1928
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-3",
-          "amount": 600,
-          "estimated_probability": 0.1564
-        }
-      ],
-      "caution_flagged": false
-    },
-    {
-      "stadium_number": 9,
-      "race_number": 1,
-      "recommended_boat": 1,
-      "predicted_probability": 0.7026,
-      "reasons": [
-        "モデル予想確率70.3%・2位(8.8%)との差+61.4pt",
-        "津はコース1勝率57.3%・イン逃げ率54.4%(過去3,341レース)で全国平均より+2.5pt高いイン戦有利な水面",
-        "選手の全国勝率6.59・通算勝率24.6%(374走92勝)は安定した数字で、通算勝利の50.0%が逃げによるものとイン逃げ実績も十分",
-        "モーター2連率26%は<30%帯だが、同帯の通算勝率自体は25.7%(109レース)とそこまで低くない。当地1コースの実績は3走2勝(66.7%、参考値)で悪くない"
-      ],
-      "sample_sizes": {
-        "venue_course_races": 3341,
-        "racer_venue_course_races": 3,
-        "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 109,
-        "racer_motor_band_low_sample": false,
-        "racer_kimarite_races": 92,
-        "racer_kimarite_low_sample": false,
-        "racer_overall_races": 374,
-        "model_training_races": 76890
-      },
-      "rank": "S",
-      "budget": 5000,
-      "bets": [
-        {
-          "type": "2連単",
-          "combination": "1-3",
-          "amount": 500,
-          "estimated_probability": 0.2091
-        },
-        {
-          "type": "2連単",
-          "combination": "1-2",
-          "amount": 500,
-          "estimated_probability": 0.1769
-        },
-        {
-          "type": "2連単",
-          "combination": "1-4",
-          "amount": 400,
-          "estimated_probability": 0.1715
-        },
-        {
-          "type": "2連単",
-          "combination": "1-5",
-          "amount": 200,
-          "estimated_probability": 0.0907
-        },
-        {
-          "type": "2連単",
-          "combination": "3-1",
-          "amount": 200,
-          "estimated_probability": 0.0682
-        },
-        {
-          "type": "2連単",
-          "combination": "2-1",
-          "amount": 200,
-          "estimated_probability": 0.0569
-        },
-        {
-          "type": "3連単",
-          "combination": "1-3-2",
-          "amount": 500,
-          "estimated_probability": 0.075
-        },
-        {
-          "type": "3連単",
-          "combination": "1-3-4",
-          "amount": 500,
-          "estimated_probability": 0.0727
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-3",
-          "amount": 400,
-          "estimated_probability": 0.0704
-        },
-        {
-          "type": "3連単",
-          "combination": "1-4-3",
-          "amount": 400,
-          "estimated_probability": 0.0675
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-4",
-          "amount": 400,
-          "estimated_probability": 0.0577
-        },
-        {
-          "type": "3連単",
-          "combination": "1-4-2",
-          "amount": 400,
-          "estimated_probability": 0.0571
-        },
-        {
-          "type": "3連単",
-          "combination": "1-3-5",
-          "amount": 200,
-          "estimated_probability": 0.0384
-        },
-        {
-          "type": "3連単",
-          "combination": "1-5-3",
-          "amount": 200,
-          "estimated_probability": 0.031
-        }
-      ],
-      "caution_flagged": false
-    },
-    {
-      "stadium_number": 8,
-      "race_number": 1,
-      "recommended_boat": 1,
-      "predicted_probability": 0.7067,
-      "reasons": [
-        "モデル予想確率70.7%・2位(10.4%)との差+60.3pt",
-        "常滑はコース1勝率58.2%・イン逃げ率55.6%(過去3,493レース)で全国平均より+3.4pt高い水面(同一開催の8R-2にも同様の傾向の候補あり)",
-        "通算勝利(45勝)の62.2%が逃げによるものでイン逃げ型の勝ちパターンを持つ",
-        "【要注意】選手の通算勝率は17.8%(253走45勝)、当地1コースの実績も3走1勝(33.3%)と、他候補と比べるとやや見劣りする数字。モーター2連率36.84%(35〜40%帯)の帯別通算勝率も10.2%(59レース)と低めで、水面のイン戦傾向頼みの側面が大きい一戦"
-      ],
-      "sample_sizes": {
-        "venue_course_races": 3493,
-        "racer_venue_course_races": 3,
-        "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 59,
-        "racer_motor_band_low_sample": false,
-        "racer_kimarite_races": 45,
-        "racer_kimarite_low_sample": false,
-        "racer_overall_races": 253,
-        "model_training_races": 76890
-      },
-      "rank": "A",
-      "budget": 3000,
-      "bets": [
-        {
-          "type": "3連単",
-          "combination": "1-3-4",
-          "amount": 400,
-          "estimated_probability": 0.1124
-        },
-        {
-          "type": "3連単",
-          "combination": "1-4-3",
-          "amount": 400,
-          "estimated_probability": 0.1024
-        },
-        {
-          "type": "3連単",
-          "combination": "1-3-2",
-          "amount": 400,
-          "estimated_probability": 0.0884
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-3",
-          "amount": 300,
-          "estimated_probability": 0.074
-        },
-        {
-          "type": "3連単",
-          "combination": "1-4-2",
-          "amount": 300,
-          "estimated_probability": 0.0661
-        },
-        {
-          "type": "2連単",
-          "combination": "1-3",
-          "amount": 500,
-          "estimated_probability": 0.2501
-        },
-        {
-          "type": "2連単",
-          "combination": "1-4",
-          "amount": 400,
-          "estimated_probability": 0.2053
-        },
-        {
-          "type": "2連単",
-          "combination": "1-2",
-          "amount": 300,
-          "estimated_probability": 0.1614
-        }
-      ],
-      "caution_flagged": true,
-      "rank_without_caution": "S"
+        "racer_overall_races": 287,
+        "racer_overall_win_rate": 0.3519,
+        "model_training_races": 77070
+      }
     },
     {
       "stadium_number": 16,
       "race_number": 1,
       "recommended_boat": 1,
-      "predicted_probability": 0.7017,
+      "predicted_probability": 0.7398,
       "reasons": [
-        "モデル予想確率70.2%・2位(10.0%)との差+60.2pt",
-        "児島はコース1勝率55.9%・イン逃げ率53.5%(過去3,288レース)で全国平均よりやや高いイン戦有利な水面",
-        "選手の全国勝率5.5・通算勝率24.4%(340走83勝)、通算勝利の51.8%が逃げによるものと標準以上のイン逃げ実績",
-        "モーター2連率32.55%(30〜35%帯、同帯通算勝率16.0%/75レース)は平均的な水準。当地1コースの実績データは無く(初出走または蓄積不足)、水面傾向と選手個人の実力の組み合わせによる評価"
+        "モデル予想確率74.0%・2位候補との差+66.1pt。通算59勝中36勝(61.0%)が逃げによるもので、本日4候補中もっとも『逃げ型』の色が濃い選手。",
+        "児島競艇場のコース1勝率は55.9%(過去3,300レース)で全国平均54.8%とほぼ同水準、堅い決着・大荒れのどちらにも極端に偏らない水面。",
+        "【要注意】ただし選手自身の当地コース1実績は11走4勝(36.4%)で、水面平均(55.9%)・全国平均(54.8%)をいずれも下回っており、モデルの高確信度と当地個人実績がやや食い違っている。",
+        "搭載モーターの2連率36.36%(35〜40%帯)は、この帯における本人勝率24.6%(61走)と好相性(同帯の全国平均勝率17.15%を+7.4pt上回る)。なお通算でフライング歴1回あり。"
       ],
       "sample_sizes": {
-        "venue_course_races": 3288,
-        "racer_venue_course_races": 0,
-        "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 75,
-        "racer_motor_band_low_sample": false,
-        "racer_kimarite_races": 83,
-        "racer_kimarite_low_sample": false,
-        "racer_overall_races": 340,
-        "model_training_races": 76890
-      },
-      "rank": "S",
-      "budget": 5000,
-      "bets": [
-        {
-          "type": "2連単",
-          "combination": "1-3",
-          "amount": 900,
-          "estimated_probability": 0.2357
-        },
-        {
-          "type": "2連単",
-          "combination": "1-2",
-          "amount": 800,
-          "estimated_probability": 0.2256
-        },
-        {
-          "type": "2連単",
-          "combination": "1-4",
-          "amount": 500,
-          "estimated_probability": 0.1338
-        },
-        {
-          "type": "2連単",
-          "combination": "3-1",
-          "amount": 300,
-          "estimated_probability": 0.0781
-        },
-        {
-          "type": "3連単",
-          "combination": "1-3-2",
-          "amount": 800,
-          "estimated_probability": 0.1141
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-3",
-          "amount": 800,
-          "estimated_probability": 0.1117
-        },
-        {
-          "type": "3連単",
-          "combination": "1-3-4",
-          "amount": 500,
-          "estimated_probability": 0.0677
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-4",
-          "amount": 400,
-          "estimated_probability": 0.0634
-        }
-      ],
-      "caution_flagged": false
-    },
-    {
-      "stadium_number": 8,
-      "race_number": 5,
-      "recommended_boat": 1,
-      "predicted_probability": 0.7152,
-      "reasons": [
-        "モデル予想確率71.5%・2位(11.4%)との差+60.1pt",
-        "常滑はコース1勝率58.2%・イン逃げ率55.6%(過去3,493レース)で全国平均より+3.4pt高い水面(本日3レース目のイン戦有利候補)",
-        "選手の全国勝率7.21・通算勝率31.9%(385走123勝)は本日の候補群の中でも最も高い水準で、通算勝利の61.0%が逃げによるものと強いイン逃げ実績を持つ",
-        "モーター2連率34.93%(30〜35%帯、同帯通算勝率30.8%/91レース)も良好。当地1コースの実績は3走3勝(100%、サンプルは少なく参考値)"
-      ],
-      "sample_sizes": {
-        "venue_course_races": 3493,
-        "racer_venue_course_races": 3,
-        "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 91,
-        "racer_motor_band_low_sample": false,
-        "racer_kimarite_races": 123,
-        "racer_kimarite_low_sample": false,
-        "racer_overall_races": 385,
-        "model_training_races": 76890
-      },
-      "rank": "S",
-      "budget": 5000,
-      "bets": [
-        {
-          "type": "2連単",
-          "combination": "1-2",
-          "amount": 1100,
-          "estimated_probability": 0.286
-        },
-        {
-          "type": "2連単",
-          "combination": "1-4",
-          "amount": 600,
-          "estimated_probability": 0.17
-        },
-        {
-          "type": "2連単",
-          "combination": "1-6",
-          "amount": 500,
-          "estimated_probability": 0.1344
-        },
-        {
-          "type": "2連単",
-          "combination": "2-1",
-          "amount": 300,
-          "estimated_probability": 0.0919
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-4",
-          "amount": 800,
-          "estimated_probability": 0.1133
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-6",
-          "amount": 600,
-          "estimated_probability": 0.0895
-        },
-        {
-          "type": "3連単",
-          "combination": "1-4-2",
-          "amount": 600,
-          "estimated_probability": 0.0892
-        },
-        {
-          "type": "3連単",
-          "combination": "1-6-2",
-          "amount": 500,
-          "estimated_probability": 0.0662
-        }
-      ],
-      "caution_flagged": false
-    },
-    {
-      "stadium_number": 11,
-      "race_number": 6,
-      "recommended_boat": 1,
-      "predicted_probability": 0.6965,
-      "reasons": [
-        "モデル予想確率69.7%・2位(10.4%)との差+59.3pt",
-        "びわこはコース1勝率52.3%・イン逃げ率50.3%(過去3,302レース)で全国平均よりやや低く、水面自体のイン戦傾向は強くない",
-        "それでも選手の当地1コース実績は18走11勝(61.1%)と本日の候補中で最もサンプル数が多く安心材料(low_sampleではない)。モーター2連率49.02%(45%+帯、同帯通算勝率31.4%/35レース)も高水準",
-        "通算勝利(81勝)に占める逃げの比率は43.2%とやや控えめで、逃げ一本槍というより差しやまくりも織り交ぜる選手。全国勝率6.45・通算勝率25.2%(322走81勝)は平均的"
-      ],
-      "sample_sizes": {
-        "venue_course_races": 3302,
-        "racer_venue_course_races": 18,
+        "venue_course_races": 3300,
+        "venue_course_win_rate": 0.5588,
+        "national_course1_races": 77070,
+        "national_course1_win_rate": 0.5483,
+        "racer_venue_course_races": 11,
+        "racer_venue_course_wins": 4,
+        "racer_venue_course_win_rate": 0.3636,
         "racer_venue_course_low_sample": false,
-        "racer_motor_band_races": 35,
+        "racer_motor_band_races": 61,
+        "racer_motor_band_win_rate": 0.2459,
+        "national_motor_band_races": 94821,
+        "national_motor_band_win_rate": 0.1715,
         "racer_motor_band_low_sample": false,
-        "racer_kimarite_races": 81,
+        "racer_kimarite_nige_wins": 36,
+        "racer_kimarite_total_wins": 59,
+        "racer_kimarite_nige_rate": 0.6102,
         "racer_kimarite_low_sample": false,
-        "racer_overall_races": 322,
-        "model_training_races": 76890
-      },
-      "rank": "A",
-      "budget": 3000,
-      "bets": [
-        {
-          "type": "3連単",
-          "combination": "1-5-4",
-          "amount": 400,
-          "estimated_probability": 0.095
-        },
-        {
-          "type": "3連単",
-          "combination": "1-4-5",
-          "amount": 400,
-          "estimated_probability": 0.0846
-        },
-        {
-          "type": "3連単",
-          "combination": "1-5-2",
-          "amount": 400,
-          "estimated_probability": 0.0811
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-5",
-          "amount": 300,
-          "estimated_probability": 0.0687
-        },
-        {
-          "type": "3連単",
-          "combination": "1-5-3",
-          "amount": 300,
-          "estimated_probability": 0.0567
-        },
-        {
-          "type": "2連単",
-          "combination": "1-5",
-          "amount": 500,
-          "estimated_probability": 0.2384
-        },
-        {
-          "type": "2連単",
-          "combination": "1-4",
-          "amount": 400,
-          "estimated_probability": 0.1824
-        },
-        {
-          "type": "2連単",
-          "combination": "1-2",
-          "amount": 300,
-          "estimated_probability": 0.1558
-        }
-      ],
-      "caution_flagged": false
+        "racer_overall_races": 331,
+        "racer_overall_win_rate": 0.1782,
+        "model_training_races": 77070
+      }
     },
     {
-      "stadium_number": 23,
+      "stadium_number": 12,
       "race_number": 1,
       "recommended_boat": 1,
-      "predicted_probability": 0.7262,
+      "predicted_probability": 0.739,
       "reasons": [
-        "モデル予想確率72.6%・2位(13.4%)との差+59.2pt",
-        "唐津はコース1勝率55.6%・イン逃げ率53.1%(過去3,009レース)で全国平均よりやや高いイン戦有利な水面",
-        "選手の全国勝率6.35・通算勝率20.1%(359走72勝)、通算勝利の54.2%が逃げによるものと標準的なイン逃げ実績。当地1コースの実績は8走5勝(62.5%、参考値)",
-        "【留意点】モーター2連率が0%(=今節交換後などでまだ2連対実績が無い可能性)で、同帯(<30%帯)の通算勝率16.8%(95レース)を参考にするしかなく、実際のモーター調子は未知数な点に注意"
+        "モデル予想確率73.9%・2位候補との差+64.8pt。本日4候補の中で唯一、水面傾向・当地実績・モーター相性のいずれにも明確な矛盾が見当たらない候補。",
+        "住之江競艇場のコース1勝率は56.2%(過去3,289レース)で全国平均54.8%よりやや高く、選手自身の当地コース1実績も8走6勝(75%、ただしn=8のため参考程度・low_sample)と良好。",
+        "搭載モーターの2連率40.00%(40〜45%帯)は、この帯における本人勝率28.95%(38走)と非常に好相性(同帯の全国平均勝率18.45%を+10.5pt上回る)。",
+        "通算75勝中40勝(53.3%)が逃げによるもので逃げ型としての適性も平均以上。当地勝率5.93%・連対率39.29%は全国値(5.84%・41.73%)とほぼ同水準で、際立った当地の崖(プラスにもマイナスにも)は見られない。"
       ],
       "sample_sizes": {
-        "venue_course_races": 3009,
+        "venue_course_races": 3289,
+        "venue_course_win_rate": 0.5622,
+        "national_course1_races": 77070,
+        "national_course1_win_rate": 0.5483,
         "racer_venue_course_races": 8,
+        "racer_venue_course_wins": 6,
+        "racer_venue_course_win_rate": 0.75,
         "racer_venue_course_low_sample": true,
-        "racer_motor_band_races": 95,
+        "racer_motor_band_races": 38,
+        "racer_motor_band_win_rate": 0.2895,
+        "national_motor_band_races": 54385,
+        "national_motor_band_win_rate": 0.1845,
         "racer_motor_band_low_sample": false,
-        "racer_kimarite_races": 72,
+        "racer_kimarite_nige_wins": 40,
+        "racer_kimarite_total_wins": 75,
+        "racer_kimarite_nige_rate": 0.5333,
         "racer_kimarite_low_sample": false,
-        "racer_overall_races": 359,
-        "model_training_races": 76890
-      },
-      "rank": "A",
-      "budget": 3000,
-      "bets": [
-        {
-          "type": "3連単",
-          "combination": "1-2-4",
-          "amount": 600,
-          "estimated_probability": 0.1495
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-3",
-          "amount": 500,
-          "estimated_probability": 0.1236
-        },
-        {
-          "type": "3連単",
-          "combination": "1-4-2",
-          "amount": 400,
-          "estimated_probability": 0.0973
-        },
-        {
-          "type": "3連単",
-          "combination": "1-3-2",
-          "amount": 300,
-          "estimated_probability": 0.0768
-        },
-        {
-          "type": "3連単",
-          "combination": "1-2-6",
-          "amount": 200,
-          "estimated_probability": 0.0495
-        },
-        {
-          "type": "2連単",
-          "combination": "1-2",
-          "amount": 700,
-          "estimated_probability": 0.3551
-        },
-        {
-          "type": "2連単",
-          "combination": "1-4",
-          "amount": 300,
-          "estimated_probability": 0.1562
-        }
-      ],
-      "caution_flagged": true,
-      "rank_without_caution": "S"
+        "racer_overall_races": 326,
+        "racer_overall_win_rate": 0.2301,
+        "model_training_races": 77070
+      }
     }
-  ],
-  "betting_note": "この賭け方の提案(rank/budget/bets)は、モデルが推定した確率(Harvilleの公式による組み合わせ確率の近似を含む)のみに基づいており、実際のオッズ(市場の織り込み)は考慮していません。「当たりやすさ」の予想であって「儲かるかどうか(期待値がプラスか)」の保証ではありません。参加を決めたレースは、bets内の買い目(例: 「3連単 1-2-3」)のオッズをテレボート等で確認し、estimated_probabilityと見比べて期待値がプラスかどうかを最終的に人が判断してください。"
+  ]
 }
