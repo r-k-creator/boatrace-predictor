@@ -219,6 +219,23 @@
 5. `backtest.py`実行(数分)と`backfill_exotic_payouts.py`実行(505回API呼び出し、
    約8分)は互いに独立なファイルを扱うため並行実行した。
 
+## ワークフローのpush競合対策(2026-09-18)
+
+2026-09-18の`morning_program.yml`(scheduled #3、GitHubの遅延で10:08 JST実行)が
+`git push`で「rejected (fetch first)」となり失敗した。原因は、同時刻帯に別のpush(Coworkの
+候補選定Routineのclaude/*ブランチ→`auto_merge_data_branches.yml`によるmainへのfast-forward
+等)が入り、ワークフロー開始時点のcheckoutより`main`が進んでいたこと。
+`evening_results.yml`/`evening_results_retry.yml`も素の`git push`で同じ構造だが、Actionsの
+実行履歴(evening #1〜#4、retry #1〜#3)はすべて成功で、実際に失敗したのはmorning #3のみ
+(evening系は投稿時刻がRoutineのpushと重なりにくいだけで、構造上は同じリスクを持つ)。
+
+対応: `scripts/git_push_with_retry.sh`を新設(`git pull --rebase origin main && git push`、
+最大3回、リベース衝突時は`git rebase --abort`して再試行、全滅したら非ゼロ終了)し、3つの
+ワークフローで使用。eveningの2本は、`generate_bets.py`が書き換えたcandidates.json
+(evaluate_bets.pyで使用済みの一時的なもの)が未コミットのまま作業ツリーに残ると
+`pull --rebase`が拒否されるため、push前に`git checkout --`で破棄する。bareリポジトリ2つで
+「素のpushは拒否され、スクリプトはrebaseして成功する」ことをローカル確認済み。
+
 ## Stage 2(学習機能、未着手)
 
 Stage 1が安定稼働したと判断されてから着手する前提で、まだ実装していません。予定:
