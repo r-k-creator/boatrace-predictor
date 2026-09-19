@@ -37,7 +37,7 @@ jobs:
           git add data predictions
           if ! git diff --cached --quiet; then
             git commit -m "Morning program fetch & predict $(date -u +'%Y-%m-%d')"
-            git push
+            bash scripts/git_push_with_retry.sh
           else
             echo "No changes to commit"
           fi

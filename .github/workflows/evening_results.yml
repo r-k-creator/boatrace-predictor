@@ -77,7 +77,11 @@ jobs:
           git restore --staged data/latest/candidates.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "Evening results fetch & retrain $(date -u +'%Y-%m-%d')"
-            git push
+            # pull --rebaseは作業ツリーに未コミットの変更があると拒否されるため、
+            # generate_bets.pyが書き換えたcandidates.json(evaluate_bets.pyで使用済みの
+            # 一時的なもの)を破棄しておく。
+            git checkout -- data/latest/candidates.json 2>/dev/null || true
+            bash scripts/git_push_with_retry.sh
           else
             echo "No changes to commit"
           fi

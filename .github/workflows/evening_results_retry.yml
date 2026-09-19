@@ -69,7 +69,9 @@ jobs:
           git restore --staged data/latest/candidates.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "Evening results retry $(date -u +'%Y-%m-%d')"
-            git push
+            # 理由はevening_results.ymlのコメント参照(未コミット変更があるとpull --rebaseが拒否される)
+            git checkout -- data/latest/candidates.json 2>/dev/null || true
+            bash scripts/git_push_with_retry.sh
           else
             echo "No changes to commit"
           fi
