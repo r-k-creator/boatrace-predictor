@@ -1,2 +1,5 @@
 # train_model.py (学習) で使用
 scikit-learn>=1.4
+
+# fetch_odds.py (zoneinfo Asia/Tokyo) で使用。Windowsにはシステムのタイムゾーンデータが無いため必要
+tzdata

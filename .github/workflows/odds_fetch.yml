@@ -1,0 +1,69 @@
+name: Odds fetch (締切10分前のオッズ取得)
+
+# 候補レース(SS/S/A)の締切10分前ごろ(締切の5〜15分前)に、公式サイトの一般公開オッズページから
+# 2連単/2連複/3連単/3連複のオッズを取得し、data/latest/odds/{日付}_{場}_{R}.csv に保存する。
+# 取得したオッズの利用(買い目・掛け金の補正)は未実装。詳細は scripts/fetch_odds.py の冒頭を参照。
+#
+# 時刻の扱い(すべてJST基準):
+#   - cronはUTC指定。下記2行で JST 8:04〜21:59 の間、5分おき(分は4,9,14,...。毎時0分ちょうどは
+#     GitHub側が混雑しやすく数時間遅延した実績があるため避け、deadline_reminder.yml(2,7,12,...)
+#     ともずらしている)。
+#       "4-59/5 23 * * *"   = UTC 23時台 = 翌日JST 8時台
+#       "4-59/5 0-12 * * *" = UTC 0〜12時台 = JST 9〜21時台
+#     (依頼の `*/5 * * * *` から、レースの無い深夜帯の空振りをなくすために時間帯を絞っている)
+#   - スクリプト側は zoneinfo の Asia/Tokyo で現在時刻を取る(ランナーはUTC)。
+#
+# 取得済みフラグ = 出力CSVの有無(ステートレスなので)。403/429を受けたらスクリプトは即停止して
+# 失敗扱いになるが、それまでに取得できたCSVはコミットする(if: always())。
+
+on:
+  schedule:
+    - cron: "4-59/5 23 * * *"
+    - cron: "4-59/5 0-12 * * *"
+  workflow_dispatch:
+    inputs:
+      simulate_now:
+        description: "テスト用: この時刻(JST、例 2026-09-19 10:35:00)を現在時刻として判定する(実際にオッズを取得しCSVをコミットするので、締切後の値が保存される点に注意)"
+        required: false
+        default: ""
+
+concurrency:
+  group: odds-fetch
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tzdata (zoneinfo Asia/Tokyo)
+        run: pip install tzdata
+
+      - name: Fetch odds for candidates about to close
+        working-directory: scripts
+        env:
+          FETCH_ODDS_NOW: ${{ inputs.simulate_now }}
+        run: python fetch_odds.py
+
+      - name: Commit and push new odds files
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/latest/odds
+          if ! git diff --cached --quiet; then
+            git commit -m "Odds fetch $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M') JST"
+            bash scripts/git_push_with_retry.sh
+          else
+            echo "No new odds files to commit"
+          fi
