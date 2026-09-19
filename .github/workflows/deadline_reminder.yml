@@ -1,0 +1,75 @@
+name: Deadline reminder (締切直前の通知)
+
+# 候補レース(data/latest/candidates.json)の締切が近づいたら、そのレース1件ごとに
+# 短い通知メールを送る。外部サイトには一切アクセスせず、リポジトリ内のデータ
+# (candidates.json / programs / predictions)とサーバーの現在時刻だけで判定する。
+# 詳細な仕様・通知範囲の考え方は scripts/deadline_reminder.py の冒頭を参照。
+#
+# 時刻の扱い(すべてJST基準に統一):
+#   - cronはGitHub Actionsの仕様でUTC指定。下記2行は合わせて JST 8:02〜21:57 の間、
+#     5分おき(分は2,7,12,...。毎時0分ちょうどはGitHub側が混雑しやすく数時間遅延した
+#     実績があるため避けている)。
+#       "2-59/5 23 * * *"   = UTC 23時台 = 翌日JST 8時台
+#       "2-59/5 0-12 * * *" = UTC 0〜12時台 = JST 9〜21時台
+#   - race_closed_at は元々JSTの壁時計時刻(タイムゾーン表記なし)。スクリプト側で現在時刻も
+#     JST(UTC+9)に変換してから比較する。
+#
+# 通知済み管理: data/latest/deadline_reminders_sent.json をコミットして持つ。
+# 「記録をpushしてからメール送信」の順にしているため、pushに失敗した回は送信せず
+# 次のtickで再判定される(重複送信を避ける)。
+
+on:
+  schedule:
+    - cron: "2-59/5 23 * * *"
+    - cron: "2-59/5 0-12 * * *"
+  workflow_dispatch:
+    inputs:
+      simulate_now:
+        description: "テスト用: この時刻(JST、例 2026-09-19 10:36:00)を現在時刻として判定する。指定時は送信済み記録を更新せず、件名に【テスト】が付く"
+        required: false
+        default: ""
+
+concurrency:
+  group: deadline-reminder
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Decide which candidate races to notify
+        id: prepare
+        working-directory: scripts
+        env:
+          REMINDER_NOW: ${{ inputs.simulate_now }}
+        run: |
+          python3 deadline_reminder.py prepare
+          if [ -f ../reminder_messages.json ]; then
+            echo "has_messages=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_messages=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Record sent races (before sending, to avoid duplicates)
+        if: steps.prepare.outputs.has_messages == 'true' && inputs.simulate_now == ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/latest/deadline_reminders_sent.json
+          git commit -m "Record deadline reminders sent $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M') JST"
+          bash scripts/git_push_with_retry.sh
+
+      - name: Send reminder emails
+        if: steps.prepare.outputs.has_messages == 'true'
+        working-directory: scripts
+        env:
+          GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NOTIFY_EMAIL_TO: ${{ secrets.NOTIFY_EMAIL_TO }}
+        run: python3 deadline_reminder.py send
