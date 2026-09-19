@@ -9,6 +9,7 @@
   (data/archive/programs/{date}.csvの生データを使用。data/latest/stats/racer_stats.csv等は
   レース単位・時間帯別の集計を持たない全期間平均のため、時間帯別比較にはprograms側の
   生データを用いる)
+【データ5】レース格(grade) x 時間帯のクロス集計(件数・割合)
 
 時間帯の区分(common.pyのis_night_race基準=17時以降を夜間、に合わせる):
   午前: race_closed_at < 12:00
@@ -172,6 +173,57 @@ def part3_grade_probability():
     print()
 
 
+def part5_grade_by_time_crosstab():
+    print("=" * 70)
+    print("【データ5】レース格(grade) x 時間帯 クロス集計")
+    print("=" * 70)
+
+    # (grade) -> {bucket: count}
+    by_grade_bucket = {}
+    for date_compact in TARGET_DATES:
+        program_races = load_programs(date_compact)
+        pred_rows = load_predictions(date_compact)
+        race_keys = {(r["stadium_number"], r["race_number"]) for r in pred_rows}
+
+        for key in race_keys:
+            prog_row = program_races.get(key)
+            if not prog_row:
+                continue
+            grade = prog_row.get("race_grade_number") or "不明"
+            bucket = time_bucket(prog_row.get("race_closed_at"))
+            if not bucket:
+                continue
+            by_grade_bucket.setdefault(grade, {"午前": 0, "午後": 0, "夜間": 0})
+            by_grade_bucket[grade][bucket] += 1
+
+    for grade in sorted(by_grade_bucket.keys(), key=lambda g: (g == "不明", g)):
+        counts = by_grade_bucket[grade]
+        total = sum(counts.values())
+        parts = ", ".join(
+            f"{b}{counts[b]}件({counts[b]/total*100:.1f}%)" for b in ["午前", "午後", "夜間"]
+        )
+        print(f"  grade={grade} (計{total}件): {parts}")
+    print()
+
+    # 逆方向: 時間帯ごとのgrade構成比(同じ数字の裏返しだが、時間帯視点でも見えるように)
+    print("  -- 時間帯視点での内訳 --")
+    bucket_totals = {"午前": 0, "午後": 0, "夜間": 0}
+    for counts in by_grade_bucket.values():
+        for b in bucket_totals:
+            bucket_totals[b] += counts[b]
+    for bucket in ["午前", "午後", "夜間"]:
+        total = bucket_totals[bucket]
+        if total == 0:
+            print(f"  {bucket}: データなし")
+            continue
+        parts = ", ".join(
+            f"grade={g}:{by_grade_bucket[g][bucket]}件({by_grade_bucket[g][bucket]/total*100:.1f}%)"
+            for g in sorted(by_grade_bucket.keys(), key=lambda g: (g == "不明", g))
+        )
+        print(f"  {bucket}(計{total}件): {parts}")
+    print()
+
+
 def part4_racer_motor_by_time():
     print("=" * 70)
     print("【データ4】時間帯別の出走選手 全国勝率・モーター2連率の平均")
@@ -217,6 +269,7 @@ def main():
     part2_time_bucket_probability()
     part3_grade_probability()
     part4_racer_motor_by_time()
+    part5_grade_by_time_crosstab()
 
 
 if __name__ == "__main__":
