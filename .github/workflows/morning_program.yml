@@ -2,8 +2,10 @@ name: Morning program fetch & predict
 
 on:
   schedule:
-    # 毎日 23:00 UTC = 8:00 JST に実行(Coworkの候補選定タスク8:15より前に終わらせる)
-    - cron: "0 23 * * *"
+    # 毎日 23:02 UTC = 8:02 JST に実行(Coworkの候補選定タスク8:15より前に終わらせる)
+    # 分=0だと毎時ちょうどの実行集中で数時間遅延するリスクがあるため、数分ずらしている
+    # (evening_results.yml/evening_results_retry.ymlと同じ対策)。
+    - cron: "2 23 * * *"
   workflow_dispatch: {}
 
 permissions:

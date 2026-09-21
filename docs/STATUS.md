@@ -49,9 +49,10 @@
   再検証すること。詳細: [docs/betting_system_design.md](betting_system_design.md)。
 - **Stage 2(学習機能: 較正チェック・累積収支・予算自動調整)は未着手**。Stage 1(結果取得+
   日次収支メール)が実データで安定稼働したと判断されてから着手する。
-- **`evening_results.yml`/`evening_results_retry.yml`以外のcronは分=0のまま**
-  (`morning_program.yml`等)。GitHub Actionsの毎時ちょうどの混雑による数時間遅延リスクが
-  残っている(evening系2つは2026-09-17に対応済み)。
+- ~~`evening_results.yml`/`evening_results_retry.yml`以外のcronは分=0のまま~~
+  **2026-09-21対応済み**: `morning_program.yml`(8:02 JST)・`candidates_insurance_check.yml`
+  (9:03 JST)・`programs_recheck.yml`(13:04 JST)も分=0から数分ずらした
+  (`deadline_reminder.yml`/`odds_fetch.yml`はもともと分ずらし済み)。
 - **月1回程度の「柔らかい注意喚起表現」目視レビュー**(ただし/一方で等、キーワード判定で
   拾えないもの)は未実装、必要になったら着手。
 - **`data/latest/candidates_evaluations.csv`/`bets_evaluations.csv`は日次追記で際限なく増える**
