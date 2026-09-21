@@ -17,7 +17,7 @@
 
 **`tools/` = 手動のデータ操作**(cronには入れない)
 `backfill.py`(過去分の一括取得)、`backfill_exotic_payouts.py`(払戻の穴埋め)、
-`backfill_odds.py`(過去の確定オッズ)、`migrate_csv_schema.py`(CSVスキーマ移行)。
+`backfill_odds.py`(過去の確定3連単オッズ)、`backfill_odds_exacta.py`(同2連単オッズ、3連単の対象レース全部の全通り)、`migrate_csv_schema.py`(CSVスキーマ移行)。
 
 `analysis/`・`tools/`のスクリプトは、先頭で`scripts/`をimportパスに足しているため、どのフォルダからでも
 `python scripts/tools/backfill_odds.py`のように実行できます。
