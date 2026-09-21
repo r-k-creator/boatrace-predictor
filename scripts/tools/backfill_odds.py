@@ -2,7 +2,7 @@
 過去レースの「確定(最終)オッズ」を一括で取得するバックフィル用スクリプト(手動実行専用)。
 
 **GitHub Actionsのcron等には絶対に組み込まない**。明示的に実行を指示された時だけ
-手元で `python scripts/backfill_odds.py` を実行する。ワークフロー(.github/workflows/)は
+手元で `python scripts/tools/backfill_odds.py` を実行する。ワークフロー(.github/workflows/)は
 作らない。
 
 入力CSV(既定: data/archive/odds_target_60days.csv、UTF-8、ヘッダー: 日付,場コード,レース番号,買い目):
@@ -27,10 +27,14 @@
 ページ取得に失敗したレース(404・通信エラー)は出力に書かず、次回の再実行で再試行される。
 
 使い方:
-    python scripts/backfill_odds.py                       # 全件(中断していれば続きから)
-    python scripts/backfill_odds.py --limit 20            # 今回はここまで20レースだけ取得
-    python scripts/backfill_odds.py --input IN.csv --output OUT.csv --interval 2
+    python scripts/tools/backfill_odds.py                       # 全件(中断していれば続きから)
+    python scripts/tools/backfill_odds.py --limit 20            # 今回はここまで20レースだけ取得
+    python scripts/tools/backfill_odds.py --input IN.csv --output OUT.csv --interval 2
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts/ を import パスに足す(共通モジュール common.py 等を使うため)
 import argparse
 import csv
 import os

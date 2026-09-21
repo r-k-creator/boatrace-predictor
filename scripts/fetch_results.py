@@ -15,7 +15,7 @@ motor_2rate/motor_3rate(モーターの2/3連率)と entry_course_program(出走
 単勝(win)・複勝(place)に加えて、2連単(exacta)・3連単(trifecta)・3連複(trio)の
 払戻(combination/payout)もresults_races.csvに保存する(scripts/generate_bets.pyが
 作る買い目の的中判定に scripts/evaluate_bets.py が使う)。2025-05-01〜のこの列が
-無い既存データは scripts/migrate_csv_schema.py で空欄のまま列だけ追加済み
+無い既存データは scripts/tools/migrate_csv_schema.py で空欄のまま列だけ追加済み
 (過去分を遡って取得し直してはいない)。
 
 使い方:

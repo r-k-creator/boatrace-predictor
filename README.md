@@ -21,7 +21,7 @@ GitHub Actionsが以下のワークフローを毎日自動実行する、完全
 直前情報(previews)の自動巡回取得(旧`near_race.yml`、5分おき)は廃止しました。実際の進入コース・
 展示タイム・オッズは、参加すると決めたレースについてのみ**スクリーンショットを撮って手動で確認する**
 運用に変更しています(下記「参加レースの手動フロー」参照)。過去データのバックテスト用に直前情報を
-アーカイブしたい場合は `scripts/fetch_previews.py` / `scripts/backfill.py` を手動実行してください。
+アーカイブしたい場合は `scripts/fetch_previews.py` / `scripts/tools/backfill.py` を手動実行してください。
 
 **できないこと(重要)**
 - **リアルタイムのオッズは取得していません。** このAPIにはオッズが含まれないため、
@@ -114,7 +114,7 @@ Public/Privateどちらでも構いません(データを他人に見られた�
 (バックアップとして `*.csv.bak` を残します。複数回実行しても安全です)。
 
 ```bash
-python scripts/migrate_csv_schema.py
+python scripts/tools/migrate_csv_schema.py
 ```
 
 ### 学習が始まるタイミングについて
@@ -140,7 +140,7 @@ CSVはGitHub上でそのまま見られますし、「Download raw file」でダ
 
 ```bash
 cd scripts
-python backfill.py 2025-05-01              # 2025-05-01〜今日まで一括取得(時間がかかります)
+python tools/backfill.py 2025-05-01              # 2025-05-01〜今日まで一括取得(時間がかかります)
 python backtest.py                          # 2025-05-01〜取得済みデータの最終日で検証
 python backtest.py 2025-05-01 2025-08-31    # 期間を指定して検証
 ```

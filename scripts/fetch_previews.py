@@ -5,7 +5,7 @@ data/previews/{YYYYMMDD}.csv に保存する。
 本番の日次運用では previews は refresh_near_race.py が締切直前のレースだけをその場で
 取得しており、ファイルには保存していない。このスクリプトはPhase 4のバックテスト用に、
 「その日の全レース分」のpreviews(実際の進入コース・展示タイム・締切直前の実測天候)を
-アーカイブする目的専用(scripts/backfill.py から呼ばれる)。
+アーカイブする目的専用(scripts/tools/backfill.py から呼ばれる)。
 
 使い方:
     python scripts/fetch_previews.py             # 今日の分を取得

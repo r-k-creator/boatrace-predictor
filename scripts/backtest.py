@@ -28,7 +28,7 @@ train_model.pyと同じ日次粒度)、D のレースを予想・評価する。
 学習(過去データ)はどのパターンも実際の結果天候(results_races.csv)を使う。
 
 前提: data/programs/*.csv・data/results_races.csv・data/results_entries.csv・
-data/previews/*.csv に対象期間の実データが揃っていること(scripts/backfill.py)。
+data/previews/*.csv に対象期間の実データが揃っていること(scripts/tools/backfill.py)。
 
 出力(パターンごとに接尾辞 _a / _b / _c を付与):
     data/backtest_evaluations_{variant}.csv
@@ -497,7 +497,7 @@ def main():
         if d >= start_str and (end_str is None or d <= end_str)
     )
     if not candidate_dates:
-        print("[error] 対象期間のデータがありません。先に scripts/backfill.py で過去データを取得してください。")
+        print("[error] 対象期間のデータがありません。先に scripts/tools/backfill.py で過去データを取得してください。")
         return
 
     print(f"[info] バックテスト対象: {candidate_dates[0]} 〜 {candidate_dates[-1]} "
@@ -824,7 +824,7 @@ def main():
 
     if set(VARIANTS) >= {"a", "b", "c"}:
         repo_root = os.path.dirname(DATA_DIR)
-        conclusion_path = os.path.join(repo_root, "backtest_conclusion.md")
+        conclusion_path = os.path.join(repo_root, "docs", "backtest_conclusion.md")
         write_conclusion_md(
             conclusion_path, comparison_rows, recent, judgment,
             (candidate_dates[0], candidate_dates[-1]), len(candidate_dates),

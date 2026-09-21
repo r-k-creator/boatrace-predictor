@@ -13,8 +13,12 @@ fetch_results.py は「その日付がCSVに既に存在するか」で丸ごと
 その日の全レース分の払戻が取れるので、全体でAPI呼び出し回数 = 空欄の日数。
 
 使い方:
-    python scripts/backfill_exotic_payouts.py
+    python scripts/tools/backfill_exotic_payouts.py
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts/ を import パスに足す(共通モジュール common.py 等を使うため)
 import csv
 import shutil
 from pathlib import Path
@@ -54,7 +58,7 @@ def main():
         rows = list(reader)
 
     if not all(c in fieldnames for c in EXOTIC_FIELDS):
-        print("[error] 払戻カラムがありません。先に scripts/migrate_csv_schema.py を実行してください")
+        print("[error] 払戻カラムがありません。先に scripts/tools/migrate_csv_schema.py を実行してください")
         return
 
     target_dates = find_dates_missing_exotic_payouts(rows)

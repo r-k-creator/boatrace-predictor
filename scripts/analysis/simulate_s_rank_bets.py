@@ -8,7 +8,7 @@
       出力する、predicted_probability>=0.70(Sランク閾値)のレースに限った6艇全員分の確率
       (race_date, venue_code, race_number, boat_number, probability, is_top1)
     data/archive/results_races.csv … 2連単/3連単/3連複の実際の払戻
-      (scripts/backfill_exotic_payouts.pyで過去分を埋めた後に実行すること)
+      (scripts/tools/backfill_exotic_payouts.pyで過去分を埋めた後に実行すること)
 
 ロジックの再利用: ランク判定(rank_for_probability)・予算(RANK_BUDGET)・買い目生成
 (build_bets)はgenerate_bets.pyの本番ロジックをそのまま呼び出す。的中判定・回収額の計算は
@@ -24,8 +24,12 @@ evaluate_bets.pyのevaluate_betをそのまま呼び出す。新規に実装し�
     標準出力にランク別・買い目種類別の集計サマリー
 
 使い方:
-    python scripts/simulate_s_rank_bets.py
+    python scripts/analysis/simulate_s_rank_bets.py
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts/ を import パスに足す(共通モジュール common.py 等を使うため)
 import csv
 from collections import defaultdict
 

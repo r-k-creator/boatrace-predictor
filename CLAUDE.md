@@ -6,4 +6,4 @@
 より詳しい経緯や設計判断が必要な場合は、STATUS.mdからリンクされている以下を参照してください:
 - [docs/betting_system_design.md](docs/betting_system_design.md) … ランク/買い目提案システムの設計判断ログ
 - [README.md](README.md) … セットアップ手順・データの見方
-- [backtest_conclusion.md](backtest_conclusion.md) … バックテストによるモデル採用判定
+- [backtest_conclusion.md](docs/backtest_conclusion.md) … バックテストによるモデル採用判定
