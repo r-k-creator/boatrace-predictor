@@ -9,8 +9,10 @@ name: Candidates.json insurance check
 
 on:
   schedule:
-    # 毎日 00:00 UTC = 9:00 JST に実行(Coworkの8:15タスクの後)
-    - cron: "0 0 * * *"
+    # 毎日 00:03 UTC = 9:03 JST に実行(Coworkの8:15タスクの後)
+    # 分=0だと毎時ちょうどの実行集中で数時間遅延するリスクがあるため、数分ずらしている
+    # (evening_results.yml/evening_results_retry.ymlと同じ対策)。
+    - cron: "3 0 * * *"
   workflow_dispatch: {}
 
 jobs:

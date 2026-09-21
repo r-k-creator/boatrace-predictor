@@ -8,8 +8,10 @@ name: Programs recheck (直前の出走表差異チェック)
 
 on:
   schedule:
-    # 毎日 04:00 UTC = 13:00 JST に実行
-    - cron: "0 4 * * *"
+    # 毎日 04:04 UTC = 13:04 JST に実行
+    # 分=0だと毎時ちょうどの実行集中で数時間遅延するリスクがあるため、数分ずらしている
+    # (evening_results.yml/evening_results_retry.ymlと同じ対策)。
+    - cron: "4 4 * * *"
   workflow_dispatch: {}
 
 permissions:
