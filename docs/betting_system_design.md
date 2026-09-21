@@ -5,7 +5,7 @@
 前提**のログです。数字やしきい値は今後のデータ蓄積で見直される可能性があります(見直した
 場合もこのファイルを更新し、古い値を消さず「変更履歴」に残してください)。
 
-関連: [README.md](../README.md)(システム全体)、[backtest_conclusion.md](../backtest_conclusion.md)(モデルのパターン選定)
+関連: [README.md](../README.md)(システム全体)、[backtest_conclusion.md](backtest_conclusion.md)(モデルのパターン選定)
 
 **運用ルール(2026-09-18追加)**: 複数の仮説がある調査を行う際は、調査結果だけでなく、
 その後の議論を経てたどり着いた結論・判断理由もこのログに記録すること。「何が起きたか」
@@ -150,7 +150,7 @@
 
 買い目種類別: 2連単 回収率78.9%(13,301買い目)、3連単 回収率75.4%(13,239買い目)。
 
-### 回収率77.3%の原因分解(2026-09-18、`scripts/analyze_s_rank_simulation.py`)
+### 回収率77.3%の原因分解(2026-09-18、`scripts/analysis/analyze_s_rank_simulation.py`)
 
 1. **的中率と回収率の分離**: レース単位の的中率(1点でも的中)は75.5%と高いが、買い目単位の
    的中率は12.3%、的中した買い目の平均払戻は100円あたり625円(6.25倍)と低い。
@@ -171,7 +171,7 @@
 結果としては制度上の上限に近い水準であり、これ以上の改善にはHarville確率の較正精度向上
 (Stage 2)や選定基準自体の見直しが必要になる可能性がある。
 
-### ベースライン比較(2026-09-18、`scripts/simulate_boat1_baseline.py`)
+### ベースライン比較(2026-09-18、`scripts/analysis/simulate_boat1_baseline.py`)
 
 「S/SSランクの選定をせず、対象期間の全レースで単純に1号艇軸の2連単流し(1-2/1-3/1-4/
 1-5/1-6の5点、モデル予測を使わない固定パターン)を、同じ1点あたり金額(500円)で
@@ -208,11 +208,11 @@
    に出力する処理を追加(全レース×6艇を残すと461,250行になり不要に大きいため、
    シミュレーション対象範囲にのみ絞った。日次モデル再学習のコスト自体はレースの
    絞り込みでは減らせないため、これは出力サイズのみの最適化)。
-3. `scripts/backfill_exotic_payouts.py`(新規)で、`data/archive/results_races.csv`の
+3. `scripts/tools/backfill_exotic_payouts.py`(新規)で、`data/archive/results_races.csv`の
    2連単/3連単/3連複払戻が空欄の日(505日)についてAPIを再取得し、既存行にマージして
    埋めた(`fetch_results.py`本体は日付が既存ならスキップする設計のため使えず、
    別スクリプトが必要だった)。
-4. `scripts/simulate_s_rank_bets.py`(新規)で上記2つの出力を読み込み、
+4. `scripts/analysis/simulate_s_rank_bets.py`(新規)で上記2つの出力を読み込み、
    `generate_bets.rank_for_probability`/`RANK_BUDGET`/`build_bets`と
    `evaluate_bets.evaluate_bet`を本番同様そのまま呼び出してシミュレーション。
    買い目1件ごとの詳細は`data/archive/s_rank_simulation_bets.csv`に保存。
@@ -291,11 +291,11 @@
   ワークフローでも`pip install tzdata`する。
 - 既知の制約: GitHubのcronは遅延・間引きがありうる(9/17〜18に実例)。取得できなかったレースは欠測になる。
 
-## 過去オッズのバックフィル(2026-09-19追加、`scripts/backfill_odds.py`、手動実行専用)
+## 過去オッズのバックフィル(2026-09-19追加、`scripts/tools/backfill_odds.py`、手動実行専用)
 
 過去60日・約2,435レースの3連単買い目(12,451行)に「確定オッズ」を付ける一括取得スクリプト。
 `odds_fetch.yml`(日次の自動取得)とは性質が違うため**cron/ワークフローには組み込まない**(ワークフローを作っていない。
-明示的に指示された時だけ手元で `python scripts/backfill_odds.py` を実行する)。
+明示的に指示された時だけ手元で `python scripts/tools/backfill_odds.py` を実行する)。
 
 - 入力`data/archive/odds_target_60days.csv`(日付,場コード,レース番号,買い目)→ 出力`data/archive/odds_backfill_60days.csv`
   (同じ列+最終オッズ)。入力ファイルは依頼メッセージに貼り付けで渡されたもの(12,451行/2,435レース)を、会話ログから機械抽出して
@@ -370,3 +370,6 @@ Stage 1が安定稼働したと判断されてから着手する前提で、ま�
 - 2026-09-18: 回収率77.3%の原因分解(的中率/回収率分離・条件別偏り・点数基準比較)を追記。
 - 2026-09-18: 「1号艇軸2連単流し・選定無し」ベースライン(回収率76.2%)との比較を追記。
   S/SS選定の回収率改善効果はわずか1.1pt。
+- 2026-09-21: フォルダ整理。単発の分析・シミュレーション6本を`scripts/analysis/`、手動のデータ操作4本を`scripts/tools/`へ移動
+  (`git mv`で履歴保持)。ワークフローが直接呼ぶ・互いにimportし合うスクリプトは`scripts/`直下のまま(移動するとActionsが壊れるため)。
+  `backtest_conclusion.md`を`docs/`へ移動(`backtest.py`の書き出し先も更新)。見取り図は`scripts/README.md`と`docs/STATUS.md`。

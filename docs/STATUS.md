@@ -2,7 +2,7 @@
 
 新しいセッションはまず**このファイルだけ**読めば全体像を把握できるようにしています。
 経緯・詳細な設計判断は書きません(→ [docs/betting_system_design.md](betting_system_design.md)、
-[README.md](../README.md)、[backtest_conclusion.md](../backtest_conclusion.md)を参照)。
+[README.md](../README.md)、[backtest_conclusion.md](backtest_conclusion.md)を参照)。
 
 ## システム構成の概要
 
@@ -27,6 +27,22 @@
 | 8:02〜21:57(5分おき) | `deadline_reminder.yml` | 候補レースの締切まで残り約5〜12分になったら、そのレース1件ごとに短い通知メール(送信済みは`data/latest/deadline_reminders_sent.json`で管理) |
 | 8:04〜21:59(5分おき) | `odds_fetch.yml` | 候補(SS/S/A)の締切5〜15分前に公式サイトからオッズ(2連単/2連複/3連単/3連複)を取得し`data/latest/odds/`に保存(蓄積のみ。買い目への反映は未実装) |
 | (`claude/**` push時) | `auto_merge_data_branches.yml` | 自動生成データのみのブランチをレビュー無しでmainへfast-forward |
+
+## フォルダ構成(2026-09-21整理)
+
+```
+boatrace-predictor/
+├─ CLAUDE.md / README.md   … 入り口(新しいセッションはSTATUS.mdから)
+├─ docs/                   … STATUS.md(これ)・betting_system_design.md(設計判断ログ)・backtest_conclusion.md
+├─ .github/workflows/      … 自動実行のワークフロー一式
+├─ scripts/                … 毎日の自動運用で使うPython(直下)。中身の地図は scripts/README.md
+│   ├─ analysis/           … 単発の分析・シミュレーション(手動)
+│   └─ tools/              … 手動のデータ操作(バックフィル・移行)。cronには入れない
+├─ data/
+│   ├─ latest/             … 直近の候補・評価・モデル・オッズ
+│   └─ archive/            … 過去の生データ・大容量の蓄積
+└─ predictions/            … 日々の予想(ワークフローが直接読み書きするので据え置き)
+```
 
 ## data/ フォルダの構成(2026-09-18整理)
 

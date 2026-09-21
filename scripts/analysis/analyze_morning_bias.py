@@ -17,8 +17,12 @@
   夜間: race_closed_at >= 17:00
 
 使い方:
-    python scripts/analyze_morning_bias.py
+    python scripts/analysis/analyze_morning_bias.py
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts/ を import パスに足す(共通モジュール common.py 等を使うため)
 import csv
 import glob
 import os

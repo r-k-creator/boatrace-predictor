@@ -16,9 +16,13 @@ programs/resultsと合わせて取得しておく。
 指定すると実行に時間がかかる(例: 2025-05-01〜現在で約1.5年分 → 1500回前後のHTTPリクエスト)。
 
 使い方:
-    python scripts/backfill.py 2025-05-01              # 2025-05-01〜今日まで
-    python scripts/backfill.py 2025-05-01 2025-08-31    # 期間を指定
+    python scripts/tools/backfill.py 2025-05-01              # 2025-05-01〜今日まで
+    python scripts/tools/backfill.py 2025-05-01 2025-08-31    # 期間を指定
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts/ を import パスに足す(共通モジュール common.py 等を使うため)
 import datetime
 import subprocess
 import sys
@@ -26,14 +30,14 @@ from pathlib import Path
 
 from common import ensure_dirs, parse_date, today_jst
 
-SCRIPTS_DIR = Path(__file__).resolve().parent
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent  # scripts/(fetch_*.py を呼ぶため)
 
 
 def main():
     ensure_dirs()
 
     if len(sys.argv) < 2:
-        print("使い方: python scripts/backfill.py <開始日> [終了日]")
+        print("使い方: python scripts/tools/backfill.py <開始日> [終了日]")
         return
 
     start = parse_date(sys.argv[1])

@@ -1,13 +1,17 @@
 """
-data/archive/s_rank_simulation_bets.csv(scripts/simulate_s_rank_bets.py出力)を
+data/archive/s_rank_simulation_bets.csv(scripts/analysis/simulate_s_rank_bets.py出力)を
 分解分析する。3つの観点:
   1. レース単位の的中率(1点でも当たった割合) vs 買い目単位の的中率・回収率
   2. 場・進入コース(1着候補艇)・風速帯・波高帯 別の回収率
   3. 旧点数基準(3〜10点)で計算し直した場合との比較
 
 使い方:
-    python scripts/analyze_s_rank_simulation.py
+    python scripts/analysis/analyze_s_rank_simulation.py
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts/ を import パスに足す(共通モジュール common.py 等を使うため)
 import csv
 from collections import defaultdict
 

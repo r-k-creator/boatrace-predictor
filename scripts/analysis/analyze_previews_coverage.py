@@ -6,11 +6,15 @@ data/backtest_evaluations_c.csv 自体には「どちらを使ったか」のフ
 各レースについて data/previews/{date}.csv にそのレース(stadium_number, race_number)の
 行が存在するかどうかで判定する(backtest.pyのload_previews_by_raceと同じロジック)。
 
-結果は data/backtest_conclusion.md に追記する。
+結果は docs/backtest_conclusion.md に追記する。
 
 使い方:
-    python scripts/analyze_previews_coverage.py
+    python scripts/analysis/analyze_previews_coverage.py
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts/ を import パスに足す(共通モジュール common.py 等を使うため)
 import csv
 import os
 
@@ -136,7 +140,7 @@ def main():
     for chk in checks:
         lines.append(f"| {chk['metric']} | {chk['baseline']} | {chk['diff']:+.4f} | {'OK' if chk['ok'] else 'NG'} |")
 
-    conclusion_path = os.path.join(os.path.dirname(DATA_DIR), "backtest_conclusion.md")
+    conclusion_path = os.path.join(os.path.dirname(DATA_DIR), "docs", "backtest_conclusion.md")
     with open(conclusion_path, "a", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 

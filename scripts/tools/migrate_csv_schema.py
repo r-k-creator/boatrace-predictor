@@ -13,8 +13,12 @@ data/results_entries.csv を新スキーマに移行するワンショット・�
 *.csv.bak として元ファイルのバックアップを残す。
 
 使い方:
-    python scripts/migrate_csv_schema.py
+    python scripts/tools/migrate_csv_schema.py
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts/ を import パスに足す(共通モジュール common.py 等を使うため)
 import csv
 import shutil
 from pathlib import Path
