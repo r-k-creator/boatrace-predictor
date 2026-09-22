@@ -41,7 +41,13 @@ from build_candidates_email import (
     format_probability_line,
     format_race_time,
 )
-from generate_bets import generate_for_candidate, load_predictions_for_date
+from generate_bets import (
+    attach_ev_to_bets,
+    ev_tier_bets,
+    generate_for_candidate,
+    load_odds_for_race,
+    load_predictions_for_date,
+)
 
 WINDOW_MIN_MINUTES = 5
 WINDOW_MAX_MINUTES = 12
@@ -77,28 +83,60 @@ def save_sent(date_str, sent):
         f.write("\n")
 
 
-def build_message(candidate, closed_at, remaining_min, program_row, race_probs, is_test):
+def format_ev_tier_section(ev_tier_list, has_odds):
+    """EVティア方式(3連単限定、docs/betting_system_design.md参照)による判定結果を
+    別セクションとして表示する。ランク基準のbets(【買い目】)とは独立した参考情報であり、
+    自動で買い目を除外・追加するものではない(最終判断は人が行う)。
+    """
+    lines = ["【EVティア判定(3連単、参考)】"]
+    if not has_odds:
+        lines.append("  (オッズ未取得のため計算できません)")
+        return lines
+    if not ev_tier_list:
+        lines.append("  EV2.0以上の組み合わせはありません(EVティア方式では見送り目安)")
+        return lines
+    for b in ev_tier_list:
+        mark = "◎" if b["ev"] >= 2.0 else ""
+        lines.append(f"  {mark} 3連単 {b['combination']:<7} EV{b['ev']:.2f}  目安{b['amount']:,}円")
+    return lines
+
+
+def build_message(candidate, closed_at, remaining_min, program_row, race_probs, is_test, odds_by_type):
     stadium = candidate["stadium_number"]
     race_number = candidate["race_number"]
     name = STADIUM_NAMES.get(stadium, f"第{stadium}場")
     prefix = "【テスト】" if is_test else ""
     subject = f"{prefix}【まもなく締切】{name}{race_number}R まもなく発走"
 
+    has_odds = bool(odds_by_type)
+    bets = attach_ev_to_bets(list(candidate.get("bets") or []), odds_by_type)
+    tier_list = ev_tier_bets(race_probs, odds_by_type.get("3連単", {})) if has_odds else []
+
     time_str = format_race_time(program_row) or closed_at.strftime("%H:%M")
     lines = [
         f"{name}{race_number}R 締切まであと約{int(remaining_min)}分(締切 {time_str})",
-        f"ランク {candidate.get('rank')}  予算{candidate.get('budget', 0):,}円  "
+        f"ランク {candidate.get('rank')}  予算{candidate.get('budget', 0):,}円(仮の目安)  "
         f"推奨 {candidate['recommended_boat']}号艇",
     ]
     prob_line = format_probability_line(candidate["recommended_boat"], race_probs)
     if prob_line:
         lines.append(prob_line)
     lines.append("")
-    lines.extend(format_bets(candidate.get("bets") or []))
-    lines += [
-        "",
-        "※オッズは考慮していません。買う前にテレボート等でオッズを確認してください。",
-    ]
+    lines.extend(format_bets(bets))
+    lines.append("")
+    lines.extend(format_ev_tier_section(tier_list, has_odds))
+    lines += ["", ""]
+    if has_odds:
+        lines.append(
+            "※EV・目安金額はオッズを考慮した参考情報です(3連単のみ。しきい値・金額は"
+            "60日間のデータに基づく暫定値)。ランク基準の予算・買い目を含め、実際に賭けるか"
+            "どうかとオッズの最終確認はご自身で行ってください。"
+        )
+    else:
+        lines.append(
+            "※このレースはオッズがまだ取得できていないため、EVは考慮していません"
+            "(ランク基準の「仮の目安」のみです)。買う前にテレボート等でオッズを確認してください。"
+        )
     return {"subject": subject, "body": "\n".join(lines)}
 
 
@@ -150,7 +188,8 @@ def prepare():
 
         race_probs = predictions_by_race.get(race_key, {})
         c = generate_for_candidate(dict(c), race_probs)  # メモリ上だけで計算(ファイルには書かない)
-        messages.append(build_message(c, closed_at, remaining, program_row, race_probs, is_test))
+        odds_by_type = load_odds_for_race(date_str, c["stadium_number"], c["race_number"])
+        messages.append(build_message(c, closed_at, remaining, program_row, race_probs, is_test, odds_by_type))
         sent.add(key_str)
 
     if not messages:

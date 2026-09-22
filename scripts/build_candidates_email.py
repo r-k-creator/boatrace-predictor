@@ -111,7 +111,13 @@ def format_bullets(reasons):
 def format_bet_line(bet):
     amount_str = f"{bet['amount']:,}円"
     prob_str = f"{bet['estimated_probability'] * 100:.1f}%"
-    return f"{bet['type']} {bet['combination']:<7}{amount_str:>6}(推定確率{prob_str})"
+    line = f"{bet['type']} {bet['combination']:<7}{amount_str:>6}(推定確率{prob_str})"
+    # "ev"はdeadline_reminder.py(締切直前、オッズが揃ってから)がgenerate_bets.attach_ev_to_bets()
+    # で付与した場合だけ存在する(このモジュール自体=朝のメールにはオッズが無いため付かない)。
+    if bet.get("ev") is not None:
+        mark = "◎" if bet["ev"] >= 2.0 else ""
+        line += f"  EV{bet['ev']:.2f}{mark} 目安{bet['ev_tier_amount']:,}円"
+    return line
 
 
 def format_bets(bets):

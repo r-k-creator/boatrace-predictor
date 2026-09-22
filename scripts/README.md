@@ -7,8 +7,8 @@
 |---|---|
 | 共通 | `common.py`(パス定数・API取得・JST時刻) |
 | 朝: 出走表・予想 | `fetch_program.py` `predict.py` `refresh_near_race.py` `recheck_program.py` |
-| 候補→買い目→メール | `generate_bets.py` `build_candidates_email.py` `deadline_reminder.py` `fetch_odds.py` |
-| 夜: 結果・学習・評価 | `fetch_results.py` `build_stats.py` `evaluate.py` `axes.py` `train_model.py` `evaluate_candidates.py` `evaluate_bets.py` |
+| 候補→買い目→メール | `generate_bets.py`(EVティア方式の関数群も含む) `build_candidates_email.py` `deadline_reminder.py`(EVティア判定を表示) `fetch_odds.py` |
+| 夜: 結果・学習・評価 | `fetch_results.py` `build_stats.py` `evaluate.py` `axes.py` `train_model.py` `evaluate_candidates.py` `evaluate_bets.py` `check_odds_accuracy.py`(オッズ精度記録) `evaluate_ev_tier.py`(EVティア方式の成績記録) |
 | 検証 | `backtest.py`(過去日をさかのぼるウォークフォワード検証。`analysis/`から使われる) |
 | 補助 | `fetch_previews.py` `git_push_with_retry.sh` |
 
@@ -17,7 +17,8 @@
 
 **`tools/` = 手動のデータ操作**(cronには入れない)
 `backfill.py`(過去分の一括取得)、`backfill_exotic_payouts.py`(払戻の穴埋め)、
-`backfill_odds.py`(過去の確定3連単オッズ)、`backfill_odds_exacta.py`(同2連単オッズ、3連単の対象レース全部の全通り)、`migrate_csv_schema.py`(CSVスキーマ移行)。
+`backfill_odds.py`(過去の確定3連単オッズ)、`backfill_odds_exacta.py`(同2連単オッズ、3連単の対象レース全部の全通り)、`migrate_csv_schema.py`(CSVスキーマ移行)、
+`check_odds_manual.py`(人によるオッズの任意ダブルチェック、完全にオプション)。
 
 `analysis/`・`tools/`のスクリプトは、先頭で`scripts/`をimportパスに足しているため、どのフォルダからでも
 `python scripts/tools/backfill_odds.py`のように実行できます。

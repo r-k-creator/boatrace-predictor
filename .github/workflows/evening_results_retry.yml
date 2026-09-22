@@ -60,6 +60,14 @@ jobs:
         working-directory: scripts
         run: python evaluate_bets.py
 
+      - name: Check deadline-snapshot odds accuracy (人手不要、全レース自動)
+        working-directory: scripts
+        run: python check_odds_accuracy.py
+
+      - name: Evaluate EV-tier strategy performance (EVティア方式の継続記録)
+        working-directory: scripts
+        run: python evaluate_ev_tier.py
+
       - name: Commit and push updated data
         run: |
           git config user.name "github-actions[bot]"
