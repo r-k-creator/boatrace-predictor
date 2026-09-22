@@ -125,6 +125,38 @@ def read_existing_dates(csv_path, date_field="race_date"):
     return dates
 
 
+def read_existing_valid_dates(csv_path, date_field="race_date", valid_field="win_boat"):
+    """CSVにすでに『有効な結果』として入っている日付の集合を返す。
+    read_existing_dates()と違い、日付が存在するだけでなく valid_field
+    (デフォルトwin_boat)が1件でも埋まっている日だけを「取得済み」とみなす。
+    """
+    valid_dates = set()
+    if not os.path.exists(csv_path):
+        return valid_dates
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row.get(valid_field):
+                valid_dates.add(row[date_field])
+    return valid_dates
+
+
+def remove_rows_for_date(csv_path, date_str, date_field="race_date"):
+    """CSVから指定日付の行をすべて取り除く(該当日を書き直す前のクリーンアップ用)。"""
+    if not os.path.exists(csv_path):
+        return
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+        rows = [row for row in reader if row.get(date_field) != date_str]
+    if fieldnames is None:
+        return
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def append_rows(csv_path, fieldnames, rows):
     """CSVに行を追記する。ファイルが無ければヘッダーを書いて作成する。"""
     if not rows:

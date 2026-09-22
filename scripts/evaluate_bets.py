@@ -121,6 +121,21 @@ def main():
               f"(evening_results_retry.ymlまたは翌日以降に結果が揃ってから再実行してください)")
         return
 
+    undetermined = 0
+    for c in payload["candidates"]:
+        key = (str(c["stadium_number"]), str(c["race_number"]))
+        race_row = races.get(key)
+        bets = c.get("bets") or []
+        if not race_row or not bets:
+            continue
+        if not (race_row.get("win_boat") or "").strip():
+            undetermined += 1
+
+    if undetermined:
+        print(f"[info] {date_str}: 候補{len(payload['candidates'])}件中{undetermined}件の結果が"
+              f"まだ確定していません。収支評価をスキップします")
+        return
+
     eval_rows, report_lines = [], []
     total_bet, total_return, n_races = 0, 0, 0
 
