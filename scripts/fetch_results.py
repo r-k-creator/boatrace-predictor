@@ -93,6 +93,17 @@ def parse_results(payload, program_by_boat):
         stadium_number = race.get("race_stadium_number")
         race_number = race.get("race_number")
 
+        if not win_combo:
+            # 稀にAPI側でpayouts.win(単勝の払戻)配列だけが欠損することがある
+            # (2026-09-20 第23場5Rで確認: 複勝・2連単・3連単・3連複は埋まっているのに
+            # 単勝だけ空、レース自体は確定済み)。その場合はboats側の
+            # racer_place_number(着順)から1着艇を補完する。払戻額(win_payout)は
+            # APIから取れないため空欄のままにする。
+            for boat in race.get("boats", []):
+                if boat.get("racer_place_number") == 1:
+                    win_combo = str(boat.get("racer_boat_number"))
+                    break
+
         race_rows.append({
             "race_date": race.get("race_date"),
             "stadium_number": stadium_number,
