@@ -8,12 +8,12 @@ scripts/tools/backfill_odds.py(3連単版)と同じ設計・同じ作法をそ�
 (「網羅率を上げるために2連単を混ぜたらどうなるか」を検証するには、特定の買い目だけでなく
 そのレースの2連単オッズが全部揃っている必要があるため)。
 
-対象レースの決め方: data/archive/odds_backfill_60days.csv(3連単バックフィルの出力)に
+対象レースの決め方: data/archive/analysis_outputs/odds_backfill_60days.csv(3連単バックフィルの出力)に
 登場する (日付,場コード,レース番号) の一意な組み合わせをそのまま使う(=3連単と同じレース
 集合について2連単も揃える。的中判定用のresults_races.csvは既に両方の賭式の実際の結果を
 持っているため、新たな結果取得は不要)。
 
-出力CSV(既定: data/archive/odds_backfill_60days_exacta.csv、ヘッダー: 日付,場コード,レース番号,買い目,最終オッズ):
+出力CSV(既定: data/archive/analysis_outputs/odds_backfill_60days_exacta.csv、ヘッダー: 日付,場コード,レース番号,買い目,最終オッズ):
     買い目は"1-2"のようなハイフン区切り(着順あり)。1レースにつき最大30行(欠場等で
     存在しない組み合わせはページに無いため出力されない)。
 
@@ -41,7 +41,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts/ を import パスに足す(共通モジュール common.py 等を使うため)
 
-from common import ARCHIVE_DIR
+from common import ANALYSIS_OUTPUTS_DIR
 from fetch_odds import (
     BASE_URL,
     AccessDenied,
@@ -50,8 +50,8 @@ from fetch_odds import (
     parse_page,
 )
 
-DEFAULT_INPUT = os.path.join(ARCHIVE_DIR, "odds_backfill_60days.csv")  # 3連単版の出力(レース一覧の元)
-DEFAULT_OUTPUT = os.path.join(ARCHIVE_DIR, "odds_backfill_60days_exacta.csv")
+DEFAULT_INPUT = os.path.join(ANALYSIS_OUTPUTS_DIR, "odds_backfill_60days.csv")  # 3連単版の出力(レース一覧の元)
+DEFAULT_OUTPUT = os.path.join(ANALYSIS_OUTPUTS_DIR, "odds_backfill_60days_exacta.csv")
 DEFAULT_INTERVAL_SEC = 1.5
 
 OUT_HEADER = ["日付", "場コード", "レース番号", "買い目", "最終オッズ"]

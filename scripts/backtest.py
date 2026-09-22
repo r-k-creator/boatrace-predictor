@@ -53,6 +53,7 @@ import generate_bets
 import predict
 import train_model
 from common import (
+    ANALYSIS_OUTPUTS_DIR,
     ARCHIVE_DIR,
     ARCHIVE_STATS_DIR,
     DATA_DIR,
@@ -762,7 +763,7 @@ def main():
                 venue_course_stats[vkey]["wins"] += 1
 
     full_probs_path = FULL_PROBS_OUTPUT_OVERRIDE or os.path.join(
-        ARCHIVE_DIR, f"backtest_full_probs_{FULL_PROBS_VARIANT}.csv"
+        ANALYSIS_OUTPUTS_DIR, f"backtest_full_probs_{FULL_PROBS_VARIANT}.csv"
     )
     axes.write_csv(full_probs_path, full_probs_rows, BT_FULL_PROBS_FIELDS)
     print(f"[info] 予測確率>={FULL_PROBS_MIN_PROBABILITY}の"

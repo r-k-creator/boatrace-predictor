@@ -4,7 +4,7 @@
 突き合わせて収支をシミュレーションする(「Sランク全賭けシミュレーション」)。
 
 入力:
-    data/archive/backtest_full_probs_b.csv … backtest.py(パターンb、BACKTEST_VARIANTS=b)が
+    data/archive/analysis_outputs/backtest_full_probs_b.csv … backtest.py(パターンb、BACKTEST_VARIANTS=b)が
       出力する、predicted_probability>=0.70(Sランク閾値)のレースに限った6艇全員分の確率
       (race_date, venue_code, race_number, boat_number, probability, is_top1)
     data/archive/results_races.csv … 2連単/3連単/3連複の実際の払戻
@@ -20,7 +20,7 @@ evaluate_bets.pyのevaluate_betをそのまま呼び出す。新規に実装し�
 (=caution降格が無い分、実運用より強気な結果になる可能性がある点に注意)。
 
 出力:
-    data/archive/s_rank_simulation_bets.csv … 買い目1件ごとの詳細(bets_evaluations.csvと同形式)
+    data/archive/analysis_outputs/s_rank_simulation_bets.csv … 買い目1件ごとの詳細(bets_evaluations.csvと同形式)
     標準出力にランク別・買い目種類別の集計サマリー
 
 使い方:
@@ -33,12 +33,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts/ を 
 import csv
 from collections import defaultdict
 
-from common import ARCHIVE_DIR, RESULTS_RACES_CSV
+from common import ANALYSIS_OUTPUTS_DIR, RESULTS_RACES_CSV
 from evaluate_bets import evaluate_bet
 from generate_bets import RANK_BUDGET, build_bets, rank_for_probability
 
-FULL_PROBS_CSV = f"{ARCHIVE_DIR}/backtest_full_probs_b.csv"
-OUT_CSV = f"{ARCHIVE_DIR}/s_rank_simulation_bets.csv"
+FULL_PROBS_CSV = f"{ANALYSIS_OUTPUTS_DIR}/backtest_full_probs_b.csv"
+OUT_CSV = f"{ANALYSIS_OUTPUTS_DIR}/s_rank_simulation_bets.csv"
 
 OUT_FIELDS = [
     "race_date", "stadium_number", "race_number", "rank", "predicted_probability",

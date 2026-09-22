@@ -4,7 +4,7 @@
 固定パターン)を、同じ1点あたり金額で賭け続けた場合の回収率を計算する
 (scripts/analysis/simulate_s_rank_bets.pyのS/SS結果=回収率77.3%との比較用)。
 
-1点あたり金額は、S/SSシミュレーション(data/archive/s_rank_simulation_bets.csv)の
+1点あたり金額は、S/SSシミュレーション(data/archive/analysis_outputs/s_rank_simulation_bets.csv)の
 実際の平均買い目金額(総投資/総買い目数)を100円単位に丸めた値を使う(「同じ1点あたり
 金額」の条件を満たすため)。
 
@@ -17,10 +17,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts/ を import パスに足す(共通モジュール common.py 等を使うため)
 import csv
 
-from common import ARCHIVE_DIR, RESULTS_RACES_CSV
+from common import ANALYSIS_OUTPUTS_DIR, RESULTS_RACES_CSV
 from evaluate_bets import evaluate_bet
 
-SIM_CSV = f"{ARCHIVE_DIR}/s_rank_simulation_bets.csv"
+SIM_CSV = f"{ANALYSIS_OUTPUTS_DIR}/s_rank_simulation_bets.csv"
 
 BOAT1_COMBOS = ["1-2", "1-3", "1-4", "1-5", "1-6"]
 
