@@ -35,7 +35,8 @@ from common import (
     fetch_json,
     load_program_index,
     parse_date,
-    read_existing_dates,
+    read_existing_valid_dates,
+    remove_rows_for_date,
     results_url_for_date,
 )
 
@@ -70,6 +71,11 @@ def combo_payout(payouts, key, index=0):
     if len(items) > index:
         return items[index].get("combination"), items[index].get("payout")
     return None, None
+
+
+def has_valid_result(race_row):
+    """win_boatが埋まっていれば確定結果とみなす。"""
+    return bool(race_row.get("win_boat"))
 
 
 def parse_results(payload, program_by_boat):
@@ -147,9 +153,9 @@ def main():
     date_str = target_date.strftime("%Y-%m-%d")
     date_compact = target_date.strftime("%Y%m%d")
 
-    already = read_existing_dates(RESULTS_RACES_CSV)
-    if date_str in already:
-        print(f"[skip] {date_str} はすでに results_races.csv に存在します")
+    already_valid = read_existing_valid_dates(RESULTS_RACES_CSV)
+    if date_str in already_valid:
+        print(f"[skip] {date_str} はすでに results_races.csv に確定結果として存在します")
         return
 
     url = results_url_for_date(target_date)
@@ -165,9 +171,20 @@ def main():
               f"motor_2rate/motor_3rate は空欄で保存されます")
 
     race_rows, entry_rows = parse_results(payload, program_by_boat)
+
+    valid_count = sum(1 for r in race_rows if has_valid_result(r))
+    if race_rows and valid_count == 0:
+        print(f"[info] {date_str} は{len(race_rows)}レース分のデータはありますが、"
+              f"結果(win_boat)が全て空欄のため、まだ結果未確定と判断して今回は保存しません。")
+        return
+
+    remove_rows_for_date(RESULTS_RACES_CSV, date_str)
+    remove_rows_for_date(RESULTS_ENTRIES_CSV, date_str)
+
     append_rows(RESULTS_RACES_CSV, RACE_FIELDS, race_rows)
     append_rows(RESULTS_ENTRIES_CSV, ENTRY_FIELDS, entry_rows)
-    print(f"[done] {date_str}: races={len(race_rows)} entries={len(entry_rows)} を追記しました")
+    print(f"[done] {date_str}: races={len(race_rows)} entries={len(entry_rows)} を追記しました"
+          f"(有効な結果={valid_count}/{len(race_rows)})")
 
 
 if __name__ == "__main__":

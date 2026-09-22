@@ -24,6 +24,7 @@
 | 13:00 | `programs_recheck.yml` | 直前の選手変更(乗り替わり)差異チェック、あればメール |
 | 22:03 | `evening_results.yml` | 結果取得・モデル再学習・候補評価・買い目評価・収支メール送信 |
 | 23:07 | `evening_results_retry.yml` | 22:03の実行が失敗/未取得だった場合のリトライ(冪等) |
+| 23:25 | `evening_results_insurance_check.yml` | 22:03・23:07の後、本日分の収支メールが実際に送れたか(`data/latest/bets_evaluations.csv`の本日更新)の保険チェック |
 | 8:02〜21:57(5分おき) | `deadline_reminder.yml` | 候補レースの締切まで残り約5〜12分になったら、そのレース1件ごとに短い通知メール(送信済みは`data/latest/deadline_reminders_sent.json`で管理) |
 | 8:04〜21:59(5分おき) | `odds_fetch.yml` | 候補(SS/S/A)の締切5〜15分前に公式サイトからオッズ(2連単/2連複/3連単/3連複)を取得し`data/latest/odds/`に保存(蓄積のみ。買い目への反映は未実装) |
 | (`claude/**` push時) | `auto_merge_data_branches.yml` | 自動生成データのみのブランチをレビュー無しでmainへfast-forward |

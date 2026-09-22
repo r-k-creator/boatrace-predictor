@@ -100,7 +100,10 @@ BT_SUMMARY_FIELDS = [
 # シミュレーション対象範囲に絞る。日次モデル再学習のコスト自体はレースの絞り込みでは
 # 減らせないので、ここでの絞り込みは出力サイズのみの最適化)。
 FULL_PROBS_VARIANT = "b"
-FULL_PROBS_MIN_PROBABILITY = dict(generate_bets.RANK_THRESHOLDS)["S"]
+FULL_PROBS_MIN_PROBABILITY = float(
+    os.environ.get("BACKTEST_FULL_PROBS_MIN", dict(generate_bets.RANK_THRESHOLDS)["S"])
+)
+FULL_PROBS_OUTPUT_OVERRIDE = os.environ.get("BACKTEST_FULL_PROBS_OUT")
 BT_FULL_PROBS_FIELDS = [
     "race_date", "venue_code", "race_number", "boat_number", "probability", "is_top1",
 ]
@@ -758,13 +761,12 @@ def main():
             if is_win:
                 venue_course_stats[vkey]["wins"] += 1
 
-    axes.write_csv(
-        os.path.join(ARCHIVE_DIR, f"backtest_full_probs_{FULL_PROBS_VARIANT}.csv"),
-        full_probs_rows, BT_FULL_PROBS_FIELDS,
+    full_probs_path = FULL_PROBS_OUTPUT_OVERRIDE or os.path.join(
+        ARCHIVE_DIR, f"backtest_full_probs_{FULL_PROBS_VARIANT}.csv"
     )
-    print(f"[info] Sランク以上(predicted_probability>={FULL_PROBS_MIN_PROBABILITY})の"
-          f"全艇分確率を{len(full_probs_rows)}行 -> "
-          f"{os.path.join(ARCHIVE_DIR, f'backtest_full_probs_{FULL_PROBS_VARIANT}.csv')}")
+    axes.write_csv(full_probs_path, full_probs_rows, BT_FULL_PROBS_FIELDS)
+    print(f"[info] 予測確率>={FULL_PROBS_MIN_PROBABILITY}の"
+          f"全艇分確率を{len(full_probs_rows)}行 -> {full_probs_path}")
 
     comparison_rows = []
     for v in VARIANTS:

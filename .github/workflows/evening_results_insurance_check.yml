@@ -1,0 +1,39 @@
+name: Evening results insurance check
+
+# 22:03のevening_results.yml、23:07のevening_results_retry.ymlの両方が実行された後に、
+# 本日分の収支メールが実際に送れた(=evaluate_bets.pyまで完走した)かを確認する保険。
+# candidates_insurance_check.ymlと同じ考え方: 本日分のdata/latest/bets_evaluations.csvが
+# 更新されていなければジョブを失敗させ、GitHubの標準のワークフロー失敗通知
+# (リポジトリの通知設定に従ってメール等が届く)で気付けるようにする。
+
+on:
+  schedule:
+    # 毎日 14:25 UTC = 23:25 JST に実行(22:03本番・23:07リトライの両方の後)
+    # 分=0だと毎時ちょうどの実行集中で数時間遅延するリスクがあるため、数分ずらしている
+    # (evening_results.yml/evening_results_retry.ymlと同じ対策)。
+    - cron: "25 14 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # bets_evaluations.csvの最終コミット日時を見るため全履歴を取得
+
+      - name: Check bets_evaluations.csv was updated today (JST)
+        run: |
+          TODAY_JST=$(TZ='Asia/Tokyo' date +%Y-%m-%d)
+          if [ ! -f data/latest/bets_evaluations.csv ]; then
+            echo "::error::data/latest/bets_evaluations.csv が存在しません(本日の収支メールが送れていない可能性)"
+            exit 1
+          fi
+          LAST_COMMIT_DATE=$(TZ='Asia/Tokyo' git log -1 --date=format-local:%Y-%m-%d --format=%cd -- data/latest/bets_evaluations.csv)
+          echo "本日(JST): $TODAY_JST / data/latest/bets_evaluations.csv最終更新(JST): $LAST_COMMIT_DATE"
+          if [ "$LAST_COMMIT_DATE" != "$TODAY_JST" ]; then
+            echo "::error::data/latest/bets_evaluations.csv が本日($TODAY_JST)更新されていません(最終更新: $LAST_COMMIT_DATE)。evening_results.yml/evening_results_retry.ymlをご確認ください。"
+            exit 1
+          fi
+          echo "OK: data/latest/bets_evaluations.csv は本日更新されています"
