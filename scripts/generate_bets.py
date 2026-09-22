@@ -107,6 +107,118 @@ BETTING_NOTE = (
 )
 
 
+# --- EVティア方式(2026-09-21〜22、別セッションで実施した過去60日間(2026-07-19〜09-17、
+#     2,397レース)の確定オッズ分析に基づく暫定ルール。詳細・分析結果は
+#     docs/betting_system_design.md参照)。-------------------------------------------
+#
+# 結論: 3連単に限り「EV(Harville確率×最終オッズ)が2.0以上の買い目だけに絞る」のが
+# 最良(60日シミュレーションで554レース・回収率144.8%・損益+131.7万円)。賭け金は
+# ランクではなくEVの大きさで段階的に変える(EV<2.0は賭けない/2.0〜3.0未満は3,000円/
+# 3.0以上は6,000円)。2連単に同じ方式を適用すると回収率60.3%の大赤字だったため、
+# EVティア方式は3連単のみに適用する(2連単は長期オッズで確率推定が甘くなる=
+# フェイバリット・ロングショット・バイアス的な傾向が確認されている)。
+#
+# 上記の数字はすべてこの60日間限定でチューニングされた値。データが増えたら定期的に
+# 見直す前提(しきい値・金額を自動で書き換える仕組みは作らない。見直すかどうかは
+# data/latest/ev_tier_evaluations.csv(evaluate_ev_tier.py)の蓄積データを見ながら
+# 人と相談して決める)。
+#
+# 設計上の重要な制約: EVの計算にはオッズが必要で、オッズが揃うのは締切5〜15分前
+# (fetch_odds.py)。そのため、朝の候補選定(このモジュールのメイン処理)ではEVは
+# 計算できず、「仮の目安」であるランク基準のbudget/betsをそのまま使う。EVベースの
+# 確定金額は、オッズが手に入る締切直前に別途(deadline_reminder.py側で)計算する
+# 2段構え設計とし、このモジュールの朝の候補選定ロジック自体は変更しない。
+EV_TIER_BET_TYPE = "3連単"  # 2連単はこの方式の対象外(上記の理由による)
+EV_TIER_THRESHOLDS = [  # (このEV以上, 賭け金円) をEVが高い順に並べる。ev_tier_budget()参照
+    (3.0, 6000),
+    (2.0, 3000),
+]
+
+
+def ev_tier_budget(ev):
+    """EV(推定確率×オッズ)から、EVティア方式における3連単の賭け金(円)を返す。
+    EVがNone、またはどのしきい値も超えない(2.0未満)場合は0円(賭けない)。"""
+    if ev is None:
+        return 0
+    for threshold, budget in EV_TIER_THRESHOLDS:
+        if ev >= threshold:
+            return budget
+    return 0
+
+
+def load_odds_for_race(date_str, stadium, race_number):
+    """fetch_odds.pyが保存した data/latest/odds/{date}_{場}_{R}.csv を読み込み、
+    {bet_type: {combination: odds}} を返す。ファイルが無い(未取得、またはfetch_odds.yml
+    とのタイミングのズレでまだ書かれていない)場合は空dict(defaultdict)を返すので、
+    呼び出し側は「オッズ無し」として扱えばよい。
+
+    oddsが0.0の行(fetch_odds.py: 欠場等でオッズが未確定なセルの表示)は、そのまま使うと
+    EVが0に見えてしまうため読み込み時に除外する(オッズ無しと同じ扱い)。
+    """
+    path = os.path.join(LATEST_DIR, "odds", f"{date_str}_{stadium}_{race_number}.csv")
+    odds_by_type = defaultdict(dict)
+    if not os.path.exists(path):
+        return odds_by_type
+    with open(path, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            try:
+                odds = float(row["odds"])
+            except (TypeError, ValueError):
+                continue
+            if odds <= 0:
+                continue
+            odds_by_type[row["bet_type"]][row["combination"]] = odds
+    return odds_by_type
+
+
+def trifecta_ev_by_combo(race_probs, trifecta_odds):
+    """3連単の全組み合わせ(harville_trifecta()による確率、trifecta_ordered_combos()経由)
+    のうち、オッズが取れているものだけEV(確率×オッズ)を計算する。{combination: ev} を返す。
+    race_probsまたはtrifecta_oddsが空なら空dictを返す。
+    """
+    if not race_probs or not trifecta_odds:
+        return {}
+    combo_probs = trifecta_ordered_combos(race_probs)
+    return {
+        combo: prob * trifecta_odds[combo]
+        for combo, prob in combo_probs.items()
+        if combo in trifecta_odds
+    }
+
+
+def ev_tier_bets(race_probs, trifecta_odds):
+    """EVティア方式(3連単限定)で「賭ける」と判定される組み合わせのリストを、
+    EV降順で返す([{"combination", "ev", "amount"}, ...])。EVティア方式のしきい値
+    (2.0)未満の組み合わせは、賭けない判定なのでそもそも含めない。
+    """
+    evs = trifecta_ev_by_combo(race_probs, trifecta_odds)
+    bets = [
+        {"combination": combo, "ev": ev, "amount": ev_tier_budget(ev)}
+        for combo, ev in evs.items()
+        if ev_tier_budget(ev) > 0
+    ]
+    return sorted(bets, key=lambda b: -b["ev"])
+
+
+def attach_ev_to_bets(bets, odds_by_type):
+    """朝の候補選定で決まった既存のbets(ランク基準)の各要素のうち、3連単かつ
+    その組み合わせのオッズが取れているものにだけ、計算できたev/ev_tier_amountを
+    追加する(メモリ上のコピーに対して使う想定。candidates.jsonへの永続化はしない)。
+    2連単・3連複、またはオッズが無い組み合わせにはキー自体を追加しない。
+    """
+    trifecta_odds = odds_by_type.get(EV_TIER_BET_TYPE, {})
+    for bet in bets:
+        if bet["type"] != EV_TIER_BET_TYPE:
+            continue
+        odds = trifecta_odds.get(bet["combination"])
+        if odds is None:
+            continue
+        ev = bet["estimated_probability"] * odds
+        bet["ev"] = round(ev, 3)
+        bet["ev_tier_amount"] = ev_tier_budget(ev)
+    return bets
+
+
 def rank_for_probability(p):
     for rank, threshold in RANK_THRESHOLDS:
         if p >= threshold:

@@ -22,11 +22,11 @@
 | 9:00 | `candidates_insurance_check.yml` | Cowork Routine(8:15頃`data/latest/candidates.json`を生成)が失敗していないかの保険チェック |
 | (随時) | `candidates_notify.yml` | `data/latest/candidates.json`のpushをトリガーに、ランク/買い目を計算しメール送信 |
 | 13:00 | `programs_recheck.yml` | 直前の選手変更(乗り替わり)差異チェック、あればメール |
-| 22:03 | `evening_results.yml` | 結果取得・モデル再学習・候補評価・買い目評価・収支メール送信 |
+| 22:03 | `evening_results.yml` | 結果取得・モデル再学習・候補評価・買い目評価・オッズ精度チェック・EVティア評価・収支メール送信 |
 | 23:07 | `evening_results_retry.yml` | 22:03の実行が失敗/未取得だった場合のリトライ(冪等) |
 | 23:25 | `evening_results_insurance_check.yml` | 22:03・23:07の後、本日分の収支メールが実際に送れたか(`data/latest/bets_evaluations.csv`の本日更新)の保険チェック |
 | 8:02〜21:57(5分おき) | `deadline_reminder.yml` | 候補レースの締切まで残り約5〜12分になったら、そのレース1件ごとに短い通知メール(送信済みは`data/latest/deadline_reminders_sent.json`で管理) |
-| 8:04〜21:59(5分おき) | `odds_fetch.yml` | 候補(SS/S/A)の締切5〜15分前に公式サイトからオッズ(2連単/2連複/3連単/3連複)を取得し`data/latest/odds/`に保存(蓄積のみ。買い目への反映は未実装) |
+| 8:04〜21:59(5分おき) | `odds_fetch.yml` | 候補(SS/S/A)の締切5〜15分前に公式サイトからオッズ(2連単/2連複/3連単/3連複)を取得し`data/latest/odds/`に保存(蓄積に加え、`deadline_reminder.yml`のEVティア判定・`evening_results.yml`のEV評価に使用) |
 | (`claude/**` push時) | `auto_merge_data_branches.yml` | 自動生成データのみのブランチをレビュー無しでmainへfast-forward |
 
 ## フォルダ構成(2026-09-21整理)
@@ -51,13 +51,21 @@ boatrace-predictor/
   evaluations.csv、backtest_*、stats/axes、stats/backtest_axes_*)。普段のセッションでは
   参照不要。
 - `data/latest/` … 直近の状態・日常的に参照するもの(candidates.json、
-  candidates_evaluations.csv、bets_evaluations.csv、stats/model.json、stats/course_stats.csv、
-  stats/racer_stats.csv)。
+  candidates_evaluations.csv、bets_evaluations.csv、odds/(締切直前オッズのスナップショット)、
+  odds_accuracy.csv(締切直前オッズと確定払戻の精度記録、2026-09-23追加)、
+  ev_tier_evaluations.csv(EVティア方式の成績記録、2026-09-23追加)、stats/model.json、
+  stats/course_stats.csv、stats/racer_stats.csv)。
 
 パス定数は`scripts/common.py`に集約されており(`ARCHIVE_DIR`/`LATEST_DIR`/`STATS_DIR`/
 `ARCHIVE_STATS_DIR`等)、ほとんどのスクリプトはここ経由でパスを解決する。
 
 ## 直近の既知の課題・保留事項
+
+- **EVティア方式(3連単限定の賭け金ルール)のしきい値・金額(EV 2.0/3.0、3,000円/6,000円)は
+  60日間限定のチューニング値**(2026-09-23実装、詳細は
+  [docs/betting_system_design.md](betting_system_design.md)「EVティア方式の実装」)。
+  `data/latest/ev_tier_evaluations.csv`にデータが蓄積されてきたら、定期的に人と相談して
+  見直すこと(自動でしきい値・金額を書き換える仕組みは無い)。
 
 - **外部のCowork Routineタスク(このリポジトリの外)が要更新**: 毎朝`data/candidates.json`
   ではなく`data/latest/candidates.json`に書き込むよう変更が必要(2026-09-18のdata/フォルダ
