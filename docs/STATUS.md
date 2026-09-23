@@ -67,11 +67,12 @@ boatrace-predictor/
 
 ## 直近の既知の課題・保留事項
 
-- **EVティア方式(3連単限定の賭け金ルール)のしきい値・金額(EV 2.0/3.0、3,000円/6,000円)は
-  60日間限定のチューニング値**(2026-09-23実装、詳細は
-  [docs/betting_system_design.md](betting_system_design.md)「EVティア方式の実装」)。
-  `data/latest/ev_tier_evaluations.csv`にデータが蓄積されてきたら、定期的に人と相談して
-  見直すこと(自動でしきい値・金額を書き換える仕組みは無い)。
+- **EVティア方式(3連単限定の賭け金ルール)のしきい値・金額(EV 2.0/3.0、3,000円/6,000円)・
+  EV計算の対象点数上限(上位8点)は60日間限定のチューニング値**(2026-09-23実装、
+  同日にEV計算の対象を全120通り→上位8点に訂正、詳細は
+  [docs/betting_system_design.md](betting_system_design.md)「EVティア方式の実装」
+  「スコープ訂正」)。`data/latest/ev_tier_evaluations.csv`にデータが蓄積されてきたら、
+  定期的に人と相談して見直すこと(自動でしきい値・金額・対象点数を書き換える仕組みは無い)。
 
 - **9/20結果データの空欄バグの後始末が未完了**: `results_races.csv`/`results_entries.csv`の
   2026-09-20分の空行修復自体は完了済み(2026-09-22、PR #3)だが、`data/latest/bets_evaluations.csv`

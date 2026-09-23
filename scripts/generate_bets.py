@@ -134,6 +134,29 @@ EV_TIER_THRESHOLDS = [  # (このEV以上, 賭け金円) をEVが高い順に並
     (2.0, 3000),
 ]
 
+# EV計算の対象を絞る上限点数(2026-09-23追加、scope訂正)。
+#
+# 元の60日間バックテスト(EV>=2.0で554レース・回収率144.8%)は、3連単の全120通り
+# ではなく、当時の候補選定ロジックが出していた買い目(1レースあたり中央値5点・
+# 最大8点、1着はほぼ1号艇寄り=本命寄り)を母集団にしていたと見られる
+# (`data/archive/odds_backfill_60days.csv`の実際の買い目を集計して確認。
+# 1着艇の内訳: 1号艇2,435件/2号艇290件/3号艇288件/4号艇137件/5号艇25件、
+# 1レースあたりの点数分布: 2点35レース/3点57/4点271/5点1,736/7点242/8点94、
+# 計2,435レース)。しかし現在の実装(trifecta_ev_by_combo)は全120通りを対象に
+# EVを計算していたため、バックテストで検証していない範囲(1着が下位艇の高オッズ
+# 組み合わせ等)まで賭けてしまっていた(実例: 2026-09-23三国3Rで、EV>=2.0の
+# 買い目が5点・合計18,000円になるケースを確認、ランク予算5,000円の3.6倍)。
+#
+# 対応: Harville確率が高い上位EV_TIER_MAX_CANDIDATES点だけをEV計算の対象にする
+# (既存のランク基準ロジックが「確率上位N点を選ぶ」という同じ考え方をすでに
+# 使っているため、それに合わせる形)。8としたのは上記分布の最大値に合わせた
+# 値で、**完全な再現ではなく最も無難な近似**(当時の候補選定ロジックの元スクリプト・
+# 元データがこのリポジトリにコミットされておらず特定できないため、100%の再現は
+# できない。詳細・経緯はdocs/betting_system_design.md「スコープ訂正」参照)。
+# しきい値・金額と同様、これも暫定値。`data/latest/ev_tier_evaluations.csv`の
+# 蓄積データを見ながら見直すこと。
+EV_TIER_MAX_CANDIDATES = 8
+
 
 def ev_tier_budget(ev):
     """EV(推定確率×オッズ)から、EVティア方式における3連単の賭け金(円)を返す。
@@ -171,17 +194,21 @@ def load_odds_for_race(date_str, stadium, race_number):
     return odds_by_type
 
 
-def trifecta_ev_by_combo(race_probs, trifecta_odds):
-    """3連単の全組み合わせ(harville_trifecta()による確率、trifecta_ordered_combos()経由)
-    のうち、オッズが取れているものだけEV(確率×オッズ)を計算する。{combination: ev} を返す。
-    race_probsまたはtrifecta_oddsが空なら空dictを返す。
+def trifecta_ev_by_combo(race_probs, trifecta_odds, max_candidates=EV_TIER_MAX_CANDIDATES):
+    """3連単のうち、Harville確率(harville_trifecta()、trifecta_ordered_combos()経由)が
+    高い上位max_candidates点に絞り、かつオッズが取れているものだけEV(確率×オッズ)を
+    計算する。{combination: ev} を返す。race_probsまたはtrifecta_oddsが空なら空dictを返す。
+
+    全120通りではなく上位N点に絞るのはEV_TIER_MAX_CANDIDATESのコメント参照
+    (元の60日間バックテストの母集団に合わせるため、2026-09-23訂正)。
     """
     if not race_probs or not trifecta_odds:
         return {}
     combo_probs = trifecta_ordered_combos(race_probs)
+    top_combos = sorted(combo_probs.items(), key=lambda x: -x[1])[:max_candidates]
     return {
         combo: prob * trifecta_odds[combo]
-        for combo, prob in combo_probs.items()
+        for combo, prob in top_combos
         if combo in trifecta_odds
     }
 
