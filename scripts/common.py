@@ -55,6 +55,12 @@ ARCHIVE_STATS_DIR = os.path.join(ARCHIVE_DIR, "stats")    # axes/・backtest_axe
 PROGRAMS_DIR = os.path.join(ARCHIVE_DIR, "programs")
 PREVIEWS_DIR = os.path.join(ARCHIVE_DIR, "previews")
 
+# archive/直下のうち、日次パイプラインが常に更新する生データ(results_*.csv・programs/・
+# previews/等)ではなく、過去に一回限りの調査・シミュレーションで作った成果物
+# (backtest_full_probs_b.csv・odds_backfill_*.csv・s_rank_simulation_bets.csv等)を
+# 分けて置く場所(2026-09-23整理)。
+ANALYSIS_OUTPUTS_DIR = os.path.join(ARCHIVE_DIR, "analysis_outputs")
+
 RESULTS_RACES_CSV = os.path.join(ARCHIVE_DIR, "results_races.csv")
 RESULTS_ENTRIES_CSV = os.path.join(ARCHIVE_DIR, "results_entries.csv")
 COURSE_STATS_CSV = os.path.join(STATS_DIR, "course_stats.csv")

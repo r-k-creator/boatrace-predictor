@@ -1,5 +1,5 @@
 """
-data/archive/s_rank_simulation_bets.csv(scripts/analysis/simulate_s_rank_bets.py出力)を
+data/archive/analysis_outputs/s_rank_simulation_bets.csv(scripts/analysis/simulate_s_rank_bets.py出力)を
 分解分析する。3つの観点:
   1. レース単位の的中率(1点でも当たった割合) vs 買い目単位の的中率・回収率
   2. 場・進入コース(1着候補艇)・風速帯・波高帯 別の回収率
@@ -16,13 +16,13 @@ import csv
 from collections import defaultdict
 
 from axes import wave_band, wind_band
-from common import ARCHIVE_DIR, RESULTS_ENTRIES_CSV, RESULTS_RACES_CSV
+from common import ANALYSIS_OUTPUTS_DIR, RESULTS_ENTRIES_CSV, RESULTS_RACES_CSV
 from evaluate_bets import evaluate_bet
 from generate_bets import RANK_BUDGET, build_bets, rank_for_probability
 import generate_bets
 
-SIM_CSV = f"{ARCHIVE_DIR}/s_rank_simulation_bets.csv"
-FULL_PROBS_CSV = f"{ARCHIVE_DIR}/backtest_full_probs_b.csv"
+SIM_CSV = f"{ANALYSIS_OUTPUTS_DIR}/s_rank_simulation_bets.csv"
+FULL_PROBS_CSV = f"{ANALYSIS_OUTPUTS_DIR}/backtest_full_probs_b.csv"
 
 
 def load_sim_rows():

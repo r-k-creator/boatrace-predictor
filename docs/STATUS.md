@@ -29,7 +29,7 @@
 | 8:04〜21:59(5分おき) | `odds_fetch.yml` | 候補(SS/S/A)の締切5〜15分前に公式サイトからオッズ(2連単/2連複/3連単/3連複)を取得し`data/latest/odds/`に保存(蓄積に加え、`deadline_reminder.yml`のEVティア判定・`evening_results.yml`のEV評価に使用) |
 | (`claude/**` push時) | `auto_merge_data_branches.yml` | 自動生成データのみのブランチをレビュー無しでmainへfast-forward |
 
-## フォルダ構成(2026-09-21整理)
+## フォルダ構成(2026-09-23整理)
 
 ```
 boatrace-predictor/
@@ -42,14 +42,20 @@ boatrace-predictor/
 ├─ data/
 │   ├─ latest/             … 直近の候補・評価・モデル・オッズ
 │   └─ archive/            … 過去の生データ・大容量の蓄積
+│       └─ analysis_outputs/ … 単発の調査・シミュレーション成果物(日次パイプラインの生データとは別置き)
 └─ predictions/            … 日々の予想(ワークフローが直接読み書きするので据え置き)
 ```
 
-## data/ フォルダの構成(2026-09-18整理)
+## data/ フォルダの構成(2026-09-23整理)
 
 - `data/archive/` … 過去の生データ・大容量の蓄積/分析結果(programs/previews/results_*、
   evaluations.csv、backtest_*、stats/axes、stats/backtest_axes_*)。普段のセッションでは
   参照不要。
+  - `data/archive/analysis_outputs/` … 一回限りの調査・シミュレーションの成果物
+    (`backtest_full_probs_b.csv`、`odds_target_60days.csv`、`odds_backfill_60days.csv`、
+    `odds_backfill_60days_exacta.csv`、`s_rank_simulation_bets.csv`)。日次パイプラインが
+    常に更新する`archive/`直下の生データとは性質が違うため分離(2026-09-23)。
+    パス定数は`scripts/common.py`の`ANALYSIS_OUTPUTS_DIR`。
 - `data/latest/` … 直近の状態・日常的に参照するもの(candidates.json、
   candidates_evaluations.csv、bets_evaluations.csv、odds/(締切直前オッズのスナップショット)、
   odds_accuracy.csv(締切直前オッズと確定払戻の精度記録、2026-09-23追加)、

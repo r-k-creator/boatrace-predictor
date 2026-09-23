@@ -5,10 +5,10 @@
 手元で `python scripts/tools/backfill_odds.py` を実行する。ワークフロー(.github/workflows/)は
 作らない。
 
-入力CSV(既定: data/archive/odds_target_60days.csv、UTF-8、ヘッダー: 日付,場コード,レース番号,買い目):
+入力CSV(既定: data/archive/analysis_outputs/odds_target_60days.csv、UTF-8、ヘッダー: 日付,場コード,レース番号,買い目):
     日付=YYYYMMDD / 場コード=01〜24 / レース番号=半角数字 / 買い目=3連単のハイフン区切り(例 1-2-3)
     1レースに複数行(複数の買い目)。
-出力CSV(既定: data/archive/odds_backfill_60days.csv、ヘッダー: 日付,場コード,レース番号,買い目,最終オッズ):
+出力CSV(既定: data/archive/analysis_outputs/odds_backfill_60days.csv、ヘッダー: 日付,場コード,レース番号,買い目,最終オッズ):
     入力の各行に「最終オッズ」列を足したもの。ページに該当の組み合わせが無い場合(欠場等)は空欄。
 
 取得方法: 1レースにつき公式サイト(boatrace.jp)の3連単オッズページ(odds3t、hd=YYYYMMDD)を
@@ -42,7 +42,7 @@ import sys
 import time
 from collections import OrderedDict
 
-from common import ARCHIVE_DIR
+from common import ANALYSIS_OUTPUTS_DIR
 from fetch_odds import (
     BASE_URL,
     AccessDenied,
@@ -51,8 +51,8 @@ from fetch_odds import (
     parse_page,
 )
 
-DEFAULT_INPUT = os.path.join(ARCHIVE_DIR, "odds_target_60days.csv")
-DEFAULT_OUTPUT = os.path.join(ARCHIVE_DIR, "odds_backfill_60days.csv")
+DEFAULT_INPUT = os.path.join(ANALYSIS_OUTPUTS_DIR, "odds_target_60days.csv")
+DEFAULT_OUTPUT = os.path.join(ANALYSIS_OUTPUTS_DIR, "odds_backfill_60days.csv")
 DEFAULT_INTERVAL_SEC = 1.5
 
 IN_HEADER = ["日付", "場コード", "レース番号", "買い目"]

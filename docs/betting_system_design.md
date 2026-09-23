@@ -204,7 +204,7 @@
    `backtest_conclusion.md`の上書きはa/b/c全部揃っている場合のみに限定し、b単独実行では
    スキップするようガードした(Phase4の確定済み結論を誤って壊さないため)。
 2. `backtest.py`のパターンbスコアリングループに、predicted_probability>=0.70
-   (Sランク閾値)のレースに限って6艇全員分の確率を`data/archive/backtest_full_probs_b.csv`
+   (Sランク閾値)のレースに限って6艇全員分の確率を`data/archive/analysis_outputs/backtest_full_probs_b.csv`
    に出力する処理を追加(全レース×6艇を残すと461,250行になり不要に大きいため、
    シミュレーション対象範囲にのみ絞った。日次モデル再学習のコスト自体はレースの
    絞り込みでは減らせないため、これは出力サイズのみの最適化)。
@@ -215,7 +215,7 @@
 4. `scripts/analysis/simulate_s_rank_bets.py`(新規)で上記2つの出力を読み込み、
    `generate_bets.rank_for_probability`/`RANK_BUDGET`/`build_bets`と
    `evaluate_bets.evaluate_bet`を本番同様そのまま呼び出してシミュレーション。
-   買い目1件ごとの詳細は`data/archive/s_rank_simulation_bets.csv`に保存。
+   買い目1件ごとの詳細は`data/archive/analysis_outputs/s_rank_simulation_bets.csv`に保存。
 5. `backtest.py`実行(数分)と`backfill_exotic_payouts.py`実行(505回API呼び出し、
    約8分)は互いに独立なファイルを扱うため並行実行した。
 
@@ -297,7 +297,7 @@
 `odds_fetch.yml`(日次の自動取得)とは性質が違うため**cron/ワークフローには組み込まない**(ワークフローを作っていない。
 明示的に指示された時だけ手元で `python scripts/tools/backfill_odds.py` を実行する)。
 
-- 入力`data/archive/odds_target_60days.csv`(日付,場コード,レース番号,買い目)→ 出力`data/archive/odds_backfill_60days.csv`
+- 入力`data/archive/analysis_outputs/odds_target_60days.csv`(日付,場コード,レース番号,買い目)→ 出力`data/archive/analysis_outputs/odds_backfill_60days.csv`
   (同じ列+最終オッズ)。入力ファイルは依頼メッセージに貼り付けで渡されたもの(12,451行/2,435レース)を、会話ログから機械抽出して
   上記パスにコミット済み(2026-09-19)。
 - 3連単だけなので**1レース=odds3tの1ページ×1回**(2,435リクエスト。1ページに全120通りが載っているので、その
@@ -318,7 +318,7 @@
     (5.9/6.9/5.7)が実払戻(2.7/3.3/2.6)より大きい。欠場艇のあるレースのオッズは払戻と一致しない可能性があるため、
     後の分析では欠場艇のあるレース(60日中35レース)を除外するか別扱いにするのが安全。
 - **2連単の確定オッズも取得済み(2026-09-22)**: `scripts/tools/backfill_odds_exacta.py`で、3連単と同じ2,435レース全部の
-  2連単を全通り取得(`data/archive/odds_backfill_60days_exacta.csv`、72,890行、約7時間13分、300レースごとに中間コミット、
+  2連単を全通り取得(`data/archive/analysis_outputs/odds_backfill_60days_exacta.csv`、72,890行、約7時間13分、300レースごとに中間コミット、
   403/429・取得失敗は0件)。「2連単を混ぜたら網羅率が上がるか」の検証用。
   - 2,419レースは30通り、16レースは20通り(ページ自体が20通り=5艇立て)。
   - **`0.0`が39行(20レース)**: ページ側の表示が`0.0`のセル(3連単の「欠場」表示とは別の表示)。オッズ未確定(投票なし等)の
@@ -497,3 +497,11 @@ Stage 1が安定稼働したと判断されてから着手する前提で、ま�
   `scripts/evaluate_ev_tier.py`(いずれも`evening_results.yml`/`_retry.yml`に組み込み)、
   `scripts/tools/check_odds_manual.py`(手動オプション)を新規追加。詳細は上記
   「EVティア方式の実装」を参照。
+- 2026-09-23: `data/archive/`直下の一回限りの調査・シミュレーション成果物5点
+  (`backtest_full_probs_b.csv`・`odds_target_60days.csv`・`odds_backfill_60days.csv`・
+  `odds_backfill_60days_exacta.csv`・`s_rank_simulation_bets.csv`)を`data/archive/analysis_outputs/`へ
+  移動(`git mv`で履歴保持)。日次パイプラインが更新する生データ(`results_*.csv`・`programs/`・
+  `previews/`等)とは性質が違うため分離。`scripts/common.py`に`ANALYSIS_OUTPUTS_DIR`定数を追加し、
+  参照していた全スクリプト(`backtest.py`、`scripts/analysis/analyze_s_rank_simulation.py`・
+  `simulate_boat1_baseline.py`・`simulate_s_rank_bets.py`、`scripts/tools/backfill_odds.py`・
+  `backfill_odds_exacta.py`)を更新。
