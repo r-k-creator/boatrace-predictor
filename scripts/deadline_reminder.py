@@ -42,6 +42,7 @@ from build_candidates_email import (
     format_race_time,
 )
 from generate_bets import (
+    EV_TIER_BET_TYPE,
     attach_ev_to_bets,
     ev_tier_bets,
     generate_for_candidate,
@@ -83,60 +84,80 @@ def save_sent(date_str, sent):
         f.write("\n")
 
 
-def format_ev_tier_section(ev_tier_list, has_odds):
-    """EVティア方式(3連単限定、docs/betting_system_design.md参照)による判定結果を
-    別セクションとして表示する。ランク基準のbets(【買い目】)とは独立した参考情報であり、
-    自動で買い目を除外・追加するものではない(最終判断は人が行う)。
+def format_ev_tier_section(ev_tier_list, can_judge):
+    """EVティア方式(3連単限定、docs/betting_system_design.md参照)による判定結果を、
+    このメールの最終的な買い目として表示する(2026-09-27変更、それまでは参考情報の別枠)。
+    計算自体はgenerate_bets.ev_tier_bets()をそのまま使い、ここでは表示だけを行う。
     """
-    lines = ["【EVティア判定(3連単、参考)】"]
-    if not has_odds:
-        lines.append("  (オッズ未取得のため計算できません)")
-        return lines
+    if not can_judge:
+        return [
+            "【買い目(EVティア判定・3連単)】",
+            "  オッズ未取得のためEV判定ができません。",
+            "  買う場合はテレボート等でオッズを確認し、ご自身で判断してください。",
+        ]
     if not ev_tier_list:
-        lines.append("  EV2.0以上の組み合わせはありません(EVティア方式では見送り目安)")
-        return lines
+        return [
+            "【買い目(EVティア判定・3連単)】",
+            "  見送り(確率上位の組み合わせにEV2.0以上がありません)",
+        ]
+    total = sum(b["amount"] for b in ev_tier_list)
+    lines = [f"【買い目(EVティア判定・3連単)】全{len(ev_tier_list)}点 合計{total:,}円"]
     for b in ev_tier_list:
-        mark = "◎" if b["ev"] >= 2.0 else ""
-        lines.append(f"  {mark} 3連単 {b['combination']:<7} EV{b['ev']:.2f}  目安{b['amount']:,}円")
+        lines.append(f"  3連単 {b['combination']:<7} EV{b['ev']:.2f}  {b['amount']:,}円")
     return lines
+
+
+def format_rank_reference(bets, budget):
+    """旧ランク基準(朝の候補選定と同じbuild_bets()の結果)の買い目を、比較用の参考情報として
+    表示する。見出し以外はbuild_candidates_email.format_bets()の表示をそのまま使う。
+    """
+    lines = format_bets(bets)
+    lines[0] = f"(参考)旧ランク基準の買い目  予算{budget:,}円" + (f"(全{len(bets)}点)" if bets else "")
+    return lines
+
+
+def ev_verdict_label(ev_tier_list, can_judge):
+    """件名に付ける判定結果の短い表示。"""
+    if not can_judge:
+        return "オッズ未取得"
+    if not ev_tier_list:
+        return "見送り(EV対象なし)"
+    total = sum(b["amount"] for b in ev_tier_list)
+    return f"EV対象 {len(ev_tier_list)}点/{total:,}円"
 
 
 def build_message(candidate, closed_at, remaining_min, program_row, race_probs, is_test, odds_by_type):
     stadium = candidate["stadium_number"]
     race_number = candidate["race_number"]
     name = STADIUM_NAMES.get(stadium, f"第{stadium}場")
-    prefix = "【テスト】" if is_test else ""
-    subject = f"{prefix}【まもなく締切】{name}{race_number}R まもなく発走"
 
-    has_odds = bool(odds_by_type)
+    # 3連単オッズと予想確率の両方が揃っているときだけEV判定できる。どちらかが欠けると
+    # ev_tier_bets()は空リストを返すが、それは「見送り」ではなく「判定不可」として扱う。
+    can_judge = bool(odds_by_type.get(EV_TIER_BET_TYPE)) and bool(race_probs)
+    tier_list = ev_tier_bets(race_probs, odds_by_type[EV_TIER_BET_TYPE]) if can_judge else []
     bets = attach_ev_to_bets(list(candidate.get("bets") or []), odds_by_type)
-    tier_list = ev_tier_bets(race_probs, odds_by_type.get("3連単", {})) if has_odds else []
+
+    prefix = "【テスト】" if is_test else ""
+    subject = f"{prefix}【まもなく締切】{name}{race_number}R {ev_verdict_label(tier_list, can_judge)}"
 
     time_str = format_race_time(program_row) or closed_at.strftime("%H:%M")
     lines = [
         f"{name}{race_number}R 締切まであと約{int(remaining_min)}分(締切 {time_str})",
-        f"ランク {candidate.get('rank')}  予算{candidate.get('budget', 0):,}円(仮の目安)  "
-        f"推奨 {candidate['recommended_boat']}号艇",
+        f"ランク {candidate.get('rank')}  推奨 {candidate['recommended_boat']}号艇",
     ]
     prob_line = format_probability_line(candidate["recommended_boat"], race_probs)
     if prob_line:
         lines.append(prob_line)
     lines.append("")
-    lines.extend(format_bets(bets))
+    lines.extend(format_ev_tier_section(tier_list, can_judge))
     lines.append("")
-    lines.extend(format_ev_tier_section(tier_list, has_odds))
+    lines.extend(format_rank_reference(bets, candidate.get("budget", 0)))
     lines += ["", ""]
-    if has_odds:
-        lines.append(
-            "※EV・目安金額はオッズを考慮した参考情報です(3連単のみ。しきい値・金額は"
-            "60日間のデータに基づく暫定値)。ランク基準の予算・買い目を含め、実際に賭けるか"
-            "どうかとオッズの最終確認はご自身で行ってください。"
-        )
-    else:
-        lines.append(
-            "※このレースはオッズがまだ取得できていないため、EVは考慮していません"
-            "(ランク基準の「仮の目安」のみです)。買う前にテレボート等でオッズを確認してください。"
-        )
+    lines.append(
+        "※買い目はEVティア方式(3連単のみ、推定確率×締切前オッズ)による判定です。しきい値・金額・"
+        "対象点数(確率上位8点)は60日間のデータに基づく暫定値で、オッズは締切までに変動します。"
+        "旧ランク基準は比較用の参考です。実際に賭けるかどうかの最終確認はご自身で行ってください。"
+    )
     return {"subject": subject, "body": "\n".join(lines)}
 
 
