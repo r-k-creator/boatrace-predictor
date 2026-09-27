@@ -15,6 +15,15 @@ data/archive/programs/{date}.csv(race_closed_at)、predictions/{date}.csv と、
 出る。幅を7分(5〜12分)とすることで、5分おきに実行される限りどのレースも必ず
 1回は範囲に入る(実際の通知は最初に範囲に入ったtickで、残り約7〜12分前になる)。
 
+race_key指定によるピンポイント処理(2026-09-27追加): 5分おきcronはGitHub Actions側の
+間引きでほとんど発火しないことが判明した(docs/STATUS.md参照)。そのため外部スケジューラ
+(締切5分前ちょうどに1回だけ呼ぶ想定)から`workflow_dispatch`の`race_key`入力
+(環境変数REMINDER_RACE_KEY、例"17-7"={場コード}-{レース番号})経由で個別のレースを
+直接指定できるようにした。race_key指定時は上記の「締切5〜12分前」判定を一切行わない
+(「いつ処理すべきか」の判断は呼び出し側=外部スケジューラが持つ前提のため)。1レース
+1回だけ通知する送信済み管理(下記)はrace_key指定時も従来通り働く(重複起動を防ぐ保険)。
+既存の5分おきcron(全候補スキャン)はそのまま並行稼働させる。
+
 1レース1回だけ通知する管理: data/latest/deadline_reminders_sent.json に
 {"date": ..., "sent": ["<場>-<R>", ...]} を保存し、ワークフロー側でコミットする。
 「記録してからメールを送る」順序にしているため、記録後にメール送信が失敗した場合は
@@ -26,6 +35,9 @@ data/archive/programs/{date}.csv(race_closed_at)、predictions/{date}.csv と、
 
 テスト用: 環境変数 REMINDER_NOW="2026-09-19 10:36:00"(JST壁時計)を指定すると、その時刻を
 「現在」として判定し、送信済み記録は更新せず、件名に【テスト】を付ける。
+
+環境変数 REMINDER_RACE_KEY="17-7" を指定すると、そのレース(場コード-レース番号)だけを
+時間判定なしで即時処理する(上記race_key指定によるピンポイント処理を参照)。
 """
 import datetime
 import json
@@ -163,7 +175,10 @@ def build_message(candidate, closed_at, remaining_min, program_row, race_probs, 
 
 def prepare():
     now, is_test = current_jst_naive()
+    target_race_key = os.environ.get("REMINDER_RACE_KEY", "").strip() or None
     print(f"[info] 現在時刻(JST): {now.strftime(TIME_FORMAT)}{'(REMINDER_NOWによる上書き)' if is_test else ''}")
+    if target_race_key:
+        print(f"[info] race_key指定: {target_race_key}(締切5〜12分前の時間判定は行わず即時処理)")
 
     messages = []
     if os.path.exists(MESSAGES_JSON):
@@ -189,9 +204,16 @@ def prepare():
     predictions_by_race = load_predictions_for_date(date_compact)
     sent = load_sent(date_str)
 
+    if target_race_key:
+        candidates = [c for c in candidates if f"{c['stadium_number']}-{c['race_number']}" == target_race_key]
+        if not candidates:
+            print(f"[warn] race_key={target_race_key} は本日の候補に見つかりません")
+            return
+
     for c in candidates:
         key_str = f"{c['stadium_number']}-{c['race_number']}"
         if key_str in sent:
+            print(f"[info] {key_str} は送信済みのためスキップします")
             continue
         race_key = (str(c["stadium_number"]), str(c["race_number"]))
         program_row = program_by_race.get(race_key)
@@ -204,8 +226,10 @@ def prepare():
 
         remaining = (closed_at - now).total_seconds() / 60
         print(f"[check] {key_str} 締切{closed_at.strftime('%H:%M')} 残り{remaining:.1f}分")
-        if not (WINDOW_MIN_MINUTES <= remaining <= WINDOW_MAX_MINUTES):
+        if not target_race_key and not (WINDOW_MIN_MINUTES <= remaining <= WINDOW_MAX_MINUTES):
             continue
+        # target_race_key指定時はここで時間判定を一切行わない(呼び出し側が正しい
+        # タイミングで起動する前提のため。上記モジュールdocstring参照)。
 
         race_probs = predictions_by_race.get(race_key, {})
         c = generate_for_candidate(dict(c), race_probs)  # メモリ上だけで計算(ファイルには書かない)
