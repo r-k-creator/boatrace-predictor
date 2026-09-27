@@ -543,6 +543,9 @@ B/Cランクはそもそもオッズ取得の対象外。そのため現状で�
 EVティア判定を実際の買い目として使うには、オッズ取得の確実性(外部cronから
 `workflow_dispatch`を叩く等)が別途必要。
 
+実装時の検証記録(31レースの新旧比較表・収支試算・メール本文サンプル)は
+[docs/verification/2026-09-27_deadline_reminder_ev_final.md](verification/2026-09-27_deadline_reminder_ev_final.md)。
+
 ## Stage 2(学習機能、未着手)
 
 Stage 1が安定稼働したと判断されてから着手する前提で、まだ実装していません。予定:
