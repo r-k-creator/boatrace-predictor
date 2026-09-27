@@ -72,16 +72,14 @@ boatrace-predictor/
 
 ### 進行中(codeに変更を渡し済み・main未反映)
 
-- **A. 予想士(外部Cowork Routine)へのEVベース買い目・予算ロジック反映**: 「予想士」専用
-  プロンプトとしてタスク1〜4+3.5を送付済み(このリポジトリの外の変更のため、ここでは
-  反映状況を追跡できない)。
+(現在、進行中の項目はありません)
 
 ### 最優先
 
 1. **予想士を「時間確認→オッズ確認→EV計算→参加レース判定→通知・買い目反映」の
    一本化フローに再設計する**。ただし全レース一気にではなく、まずSS/S/A範囲で試してから
-   対象を広げる段階を踏む。EVティア方式(3連単限定、上記A)の運用そのものに関わる
-   設計変更のため優先度最上位。
+   対象を広げる段階を踏む。EVティア方式(3連単限定、下記「解決済み」のA参照)の
+   運用そのものに関わる設計変更のため優先度最上位。
 2. **9/20結果データの空欄バグの後始末が未完了**: `results_races.csv`/`results_entries.csv`の
    2026-09-20分の空行修復自体は完了済み(2026-09-22、PR #3)だが、`data/latest/bets_evaluations.csv`
    側に09-18・09-20・09-21分の行が無いまま(誤記録だった162行を削除して以降、再計算していない)。
@@ -135,6 +133,15 @@ boatrace-predictor/
 
 ### 解決済み(参考、記述はここから削除)
 
+- ~~A. 予想士(外部Cowork Routine)へのEVベース買い目・予算ロジック反映~~ →
+  実際には外部Cowork Routineへの依頼ではなく、別セッションによる**このリポジトリ内**の
+  実装だった。`scripts/deadline_reminder.py`の`build_message()`を変更し、締切直前メールの
+  件名・本文をEVティア判定(3連単、確率上位8点)の結果に一本化、旧ランク基準の買い目は
+  参考として本文末尾に残す形で実装([PR #2](https://github.com/r-k-creator/boatrace-predictor/pull/2)、
+  2026-09-27マージ)。`generate_bets.py`や朝の候補選定、他の評価スクリプトへの変更はない。
+  検証記録は[docs/verification/2026-09-27_deadline_reminder_ev_final.md](verification/2026-09-27_deadline_reminder_ev_final.md)。
+  ただし、この変更の前提となるオッズ取得自体がほぼ機能していない問題が検証中に判明し、
+  別途「最優先」3番として記録している。
 - ~~`backtest.py`の環境変数対応パッチ~~ → `BACKTEST_VARIANTS`/`BACKTEST_FULL_PROBS_MIN`/
   `BACKTEST_FULL_PROBS_OUT`は`scripts/backtest.py`に反映済み(2026-09-23、「結果未確定
   データの永続スキップバグ」修正の一部としてこの会話内でマージ済み)。
