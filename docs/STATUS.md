@@ -25,7 +25,7 @@
 | 22:03 | `evening_results.yml` | 結果取得・モデル再学習・候補評価・買い目評価・オッズ精度チェック・EVティア評価・収支メール送信 |
 | 23:07 | `evening_results_retry.yml` | 22:03の実行が失敗/未取得だった場合のリトライ(冪等) |
 | 23:25 | `evening_results_insurance_check.yml` | 22:03・23:07の後、本日分の収支メールが実際に送れたか(`data/latest/bets_evaluations.csv`の本日更新)の保険チェック |
-| 8:02〜21:57(5分おき) | `deadline_reminder.yml` | 候補レースの締切まで残り約5〜12分になったら、そのレース1件ごとに短い通知メール。買い目はEVティア判定(3連単)の結果で、EV対象なしは「見送り」、オッズ未取得は「判定不可」と明示し、旧ランク基準は参考として末尾に表示(2026-09-27〜)(送信済みは`data/latest/deadline_reminders_sent.json`で管理) |
+| (外部スケジューラからのworkflow_dispatchのみ) | `deadline_reminder.yml` | 候補レース1件ごとに短い通知メール。買い目はEVティア判定(3連単)の結果で、EV対象なしは「見送り」、オッズ未取得は「判定不可」と明示し、旧ランク基準は参考として末尾に表示(2026-09-27〜)(送信済みは`data/latest/deadline_reminders_sent.json`で管理)。5分おきcron(schedule:)は2026-09-28に無効化済み(下記「解決済み」参照)、`workflow_dispatch`の`race_key`指定でのみ起動する |
 | 8:04〜21:59(5分おき) | `odds_fetch.yml` | 候補(SS/S/A)の締切5〜15分前に公式サイトからオッズ(2連単/2連複/3連単/3連複)を取得し`data/latest/odds/`に保存(蓄積に加え、`deadline_reminder.yml`のEVティア判定・`evening_results.yml`のEV評価に使用) |
 | (`claude/**` push時) | `auto_merge_data_branches.yml` | 自動生成データのみのブランチをレビュー無しでmainへfast-forward |
 
@@ -133,6 +133,17 @@ boatrace-predictor/
 
 ### 解決済み(参考、記述はここから削除)
 
+- ~~`deadline_reminder.yml`の5分おきcron(schedule:)~~ → 2026-09-28に無効化(コメントアウト、
+  `workflow_dispatch`は維持)。外部スケジューラ(Windows タスクスケジューラによる、締切5分前
+  ちょうどの正確な1回だけの起動、`race_key`指定の`workflow_dispatch`経由)が本番運用で実証
+  されたため。旧cronを並行稼働させたままだと、間引かれて遅れて発火したcronが「オッズ未取得
+  の通知」を先に送信済みとして記録してしまい、その後に外部スケジューラから来る正しい
+  (オッズ付きの)通知がスキップされる実害が発生した(2026-09-28 13:40 戸田7R)。
+  **既知のトレードオフ**: 外部スケジューラ側のPCが起動していない・スリープ中は通知が
+  一切送られなくなる(旧cronのような「GitHub側だけで完結する保険」が無くなる)。これは
+  Windows タスクスケジューラ方式を採用した時点で既に許容している制約であり、新たに
+  発生したものではない。`odds_fetch.yml`側の5分おきcronは重複送信の問題が起きないため、
+  安全網としてそのまま維持している。
 - ~~A. 予想士(外部Cowork Routine)へのEVベース買い目・予算ロジック反映~~ →
   実際には外部Cowork Routineへの依頼ではなく、別セッションによる**このリポジトリ内**の
   実装だった。`scripts/deadline_reminder.py`の`build_message()`を変更し、締切直前メールの
