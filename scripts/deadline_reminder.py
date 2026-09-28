@@ -49,13 +49,11 @@ from email.message import EmailMessage
 from common import JST, LATEST_DIR, load_program_index
 from build_candidates_email import (
     STADIUM_NAMES,
-    format_bets,
     format_probability_line,
     format_race_time,
 )
 from generate_bets import (
     EV_TIER_BET_TYPE,
-    attach_ev_to_bets,
     ev_tier_bets,
     generate_for_candidate,
     load_odds_for_race,
@@ -119,15 +117,6 @@ def format_ev_tier_section(ev_tier_list, can_judge):
     return lines
 
 
-def format_rank_reference(bets, budget):
-    """旧ランク基準(朝の候補選定と同じbuild_bets()の結果)の買い目を、比較用の参考情報として
-    表示する。見出し以外はbuild_candidates_email.format_bets()の表示をそのまま使う。
-    """
-    lines = format_bets(bets)
-    lines[0] = f"(参考)旧ランク基準の買い目  予算{budget:,}円" + (f"(全{len(bets)}点)" if bets else "")
-    return lines
-
-
 def ev_verdict_label(ev_tier_list, can_judge):
     """件名に付ける判定結果の短い表示。"""
     if not can_judge:
@@ -147,7 +136,6 @@ def build_message(candidate, closed_at, remaining_min, program_row, race_probs, 
     # ev_tier_bets()は空リストを返すが、それは「見送り」ではなく「判定不可」として扱う。
     can_judge = bool(odds_by_type.get(EV_TIER_BET_TYPE)) and bool(race_probs)
     tier_list = ev_tier_bets(race_probs, odds_by_type[EV_TIER_BET_TYPE]) if can_judge else []
-    bets = attach_ev_to_bets(list(candidate.get("bets") or []), odds_by_type)
 
     prefix = "【テスト】" if is_test else ""
     subject = f"{prefix}【まもなく締切】{name}{race_number}R {ev_verdict_label(tier_list, can_judge)}"
@@ -162,13 +150,11 @@ def build_message(candidate, closed_at, remaining_min, program_row, race_probs, 
         lines.append(prob_line)
     lines.append("")
     lines.extend(format_ev_tier_section(tier_list, can_judge))
-    lines.append("")
-    lines.extend(format_rank_reference(bets, candidate.get("budget", 0)))
     lines += ["", ""]
     lines.append(
         "※買い目はEVティア方式(3連単のみ、推定確率×締切前オッズ)による判定です。しきい値・金額・"
         "対象点数(確率上位8点)は60日間のデータに基づく暫定値で、オッズは締切までに変動します。"
-        "旧ランク基準は比較用の参考です。実際に賭けるかどうかの最終確認はご自身で行ってください。"
+        "実際に賭けるかどうかの最終確認はご自身で行ってください。"
     )
     return {"subject": subject, "body": "\n".join(lines)}
 
