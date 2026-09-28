@@ -39,6 +39,14 @@ HTML構造(2026-09-19に実ページで確認):
 
 テスト用: 環境変数 FETCH_ODDS_NOW="2026-09-19 10:35:00"(JST壁時計)で「現在時刻」を上書きできる。
 
+race_key指定によるピンポイント取得(2026-09-28追加、deadline_reminder.pyのrace_key処理と
+同じ考え方): 環境変数 FETCH_ODDS_RACE_KEY="17-7"(={場コード}-{レース番号})を指定すると、
+そのレース1件だけを対象に、締切5〜15分前かどうかの時間窓判定を一切行わず即座に取得する
+(ランクSS/S/A対象外の制限は従来通り適用する)。外部スケジューラがピンポイントで呼び出す
+用途を想定しており、成功/失敗は終了コードで判別できる: 0=成功(取得済み、または既に取得済み
+だった)、1=アクセス拒否(403/429、致命的)、2=それ以外の理由で取得できなかった
+(候補に無い・本日分でない・ランク対象外・ページ取得/パース失敗など)。
+
 使い方:
     python scripts/fetch_odds.py
 """
@@ -340,9 +348,81 @@ def fetch_race(date_str, stadium, race_number, closed_at, fetched_at):
     return rows, counts
 
 
+def fetch_single(now, target_race_key):
+    """race_key指定時のピンポイント取得。時間窓判定は行わない。
+    戻り値は終了コード(0=成功、1=アクセス拒否、2=それ以外の失敗)。
+    """
+    print(f"[info] race_key指定: {target_race_key}(締切5〜15分前の時間窓判定は行わず即時取得)")
+    if not os.path.exists(CANDIDATES_JSON):
+        print("[error] candidates.json が無いため取得できません")
+        return 2
+    with open(CANDIDATES_JSON, encoding="utf-8") as f:
+        payload = json.load(f)
+    date_str = payload.get("date")
+    if date_str != now.strftime("%Y-%m-%d"):
+        print(f"[error] candidates.json の日付({date_str})が本日(JST {now.strftime('%Y-%m-%d')})と"
+              f"一致しないため取得できません")
+        return 2
+
+    matched = next(
+        (c for c in payload.get("candidates", [])
+         if f"{c['stadium_number']}-{c['race_number']}" == target_race_key),
+        None,
+    )
+    if matched is None:
+        print(f"[error] race_key={target_race_key} は本日の候補に見つかりません")
+        return 2
+
+    date_compact = date_str.replace("-", "")
+    _, program_by_race = load_program_index(date_compact)
+    predictions_by_race = load_predictions_for_date(date_compact)
+
+    stadium, race_number = matched["stadium_number"], matched["race_number"]
+    race_key = (str(stadium), str(race_number))
+    c = generate_for_candidate(dict(matched), predictions_by_race.get(race_key, {}))
+    if c["rank"] not in TARGET_RANKS:
+        print(f"[error] {target_race_key}: ランク({c['rank']})がSS/S/A以外のため対象外です")
+        return 2
+
+    closed_raw = (program_by_race.get(race_key) or {}).get("race_closed_at") or ""
+    try:
+        closed_at = datetime.datetime.strptime(closed_raw, TIME_FORMAT)
+    except ValueError:
+        print(f"[error] {target_race_key}: race_closed_at({closed_raw!r})を解釈できません")
+        return 2
+
+    path = out_path(date_str, stadium, race_number)
+    if os.path.exists(path):
+        print(f"[done] {target_race_key}: 既に取得済みです -> {path}")
+        return 0
+
+    os.makedirs(ODDS_DIR, exist_ok=True)
+    fetched_at = datetime.datetime.now(JST).strftime("%Y-%m-%dT%H:%M:%S%z")
+    try:
+        rows, counts = fetch_race(date_str, stadium, race_number, closed_at, fetched_at)
+    except AccessDenied as e:
+        print(f"::error::アクセス拒否のため取得を停止します(リトライしません): {e}")
+        return 1
+    except FetchError as e:
+        print(f"[error] {target_race_key}: 取得できませんでした: {e}")
+        return 2
+
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=OUT_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+    print(f"[done] {target_race_key}: {len(rows)}行 {counts} -> {path}")
+    return 0
+
+
 def main():
     now, is_test = now_jst_naive()
     print(f"[info] 現在時刻(JST): {now.strftime(TIME_FORMAT)}{'(FETCH_ODDS_NOWによる上書き)' if is_test else ''}")
+
+    target_race_key = os.environ.get("FETCH_ODDS_RACE_KEY", "").strip() or None
+    if target_race_key:
+        return fetch_single(now, target_race_key)
+
     targets, date_str = select_targets(now)
     if not targets:
         print("[info] 取得対象のレースはありません")

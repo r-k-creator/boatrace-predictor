@@ -15,6 +15,14 @@ name: Odds fetch (締切10分前のオッズ取得)
 #
 # 取得済みフラグ = 出力CSVの有無(ステートレスなので)。403/429を受けたらスクリプトは即停止して
 # 失敗扱いになるが、それまでに取得できたCSVはコミットする(if: always())。
+#
+# race_key指定によるピンポイント起動(2026-09-28追加、deadline_reminder.ymlのPR #3と同じ考え方):
+# 5分おきcronはGitHub Actions側の間引きでほとんど発火しないため(docs/STATUS.md参照)、外部
+# スケジューラからworkflow_dispatchでrace_keyを指定すると、締切5〜15分前かどうかの時間窓判定を
+# 一切行わず、そのレース1件分のオッズだけを即座に取得する。取得できたか(=このrace_key呼び出しが
+# 成功したか)は終了コードで判別できる(0=成功、1=アクセス拒否、2=それ以外の失敗。詳細は
+# scripts/fetch_odds.py冒頭参照)。ランク(SS/S/A)対象外の制限はrace_key指定時も従来通り適用する。
+# 既存の5分おきcron(全候補スキャン)はそのまま並行稼働させる(新方式が安定するまでの保険)。
 
 on:
   schedule:
@@ -24,6 +32,10 @@ on:
     inputs:
       simulate_now:
         description: "テスト用: この時刻(JST、例 2026-09-19 10:35:00)を現在時刻として判定する(実際にオッズを取得しCSVをコミットするので、締切後の値が保存される点に注意)"
+        required: false
+        default: ""
+      race_key:
+        description: "指定したレースだけを時間窓判定なしで即時取得する(例: 17-7 = 場コード17・7R)。空なら通常のcronと同じ全候補スキャン"
         required: false
         default: ""
 
@@ -53,6 +65,7 @@ jobs:
         working-directory: scripts
         env:
           FETCH_ODDS_NOW: ${{ inputs.simulate_now }}
+          FETCH_ODDS_RACE_KEY: ${{ inputs.race_key }}
         run: python fetch_odds.py
 
       - name: Commit and push new odds files
