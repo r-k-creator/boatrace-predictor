@@ -5,8 +5,14 @@
 
 入力:
     data/archive/analysis_outputs/backtest_full_probs_b.csv … backtest.py(パターンb、BACKTEST_VARIANTS=b)が
-      出力する、predicted_probability>=0.70(Sランク閾値)のレースに限った6艇全員分の確率
-      (race_date, venue_code, race_number, boat_number, probability, is_top1)
+      出力する6艇全員分の確率(race_date, venue_code, race_number, boat_number, probability, is_top1)。
+      **2026-09-29に全レース分(20,008レース、2025-05-02〜)へ差し替え済み**
+      (旧ファイルはpredicted_probability>=0.70=Sランク閾値のレースに限定した抜粋だったが、
+      ユーザーが手元に保持していた完全版を発見・復元した)。この差し替えにより、下記
+      main()の`if budget <= 0: continue`が事実上「Sランク以上のみ」のフィルタとして機能
+      しなくなった点に注意(A/Bランクのレースも新たに処理対象に入る。このスクリプトの
+      名前・出力メッセージが引き続き「Sランク全賭け」を前提にしている場合は、rank in
+      ("SS","S")等の明示的な絞り込みを追加で入れる必要がある。2026-09-29時点では未対応)。
     data/archive/results_races.csv … 2連単/3連単/3連複の実際の払戻
       (scripts/tools/backfill_exotic_payouts.pyで過去分を埋めた後に実行すること)
 
