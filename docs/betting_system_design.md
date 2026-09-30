@@ -743,6 +743,20 @@ Stage 1が安定稼働したと判断されてから着手する前提で、ま�
 - 2026-09-29: 60日間バックテストについて別セッションが行った追加分析(EVしきい値ごとの
   回収率・累積損益の波形・点数バリエーション比較・注意点)を「60日間バックテストの
   追加分析」節として記録として追記(実装・仕様変更は無し)。
+- 2026-09-30: `results_races.csv`の結果欠測(全期間151日・1,180レース)を調査。
+  `scripts/tools/classify_results_gaps.py`(新規)でboatrace.jpの開催日程ラベル
+  (順延/中止/通常)から231組(日付×場)を自動分類し、46組(535レース)は順延・中止で
+  説明可、145組(460レース)は通常開催なのに結果欠測(=Boatrace Open API側の個別欠測)
+  と判明。後者について`scripts/tools/backfill_results_scraping.py`(新規)で
+  boatrace.jpの結果ページ(raceresult)を1レースずつスクレイピングし、着順・決まり手・
+  単勝/複勝/2連単/3連単/3連複の払戻をresults_races.csvへ直接補完した。460件中210件を
+  補完、238件は「レース中止」、12件は「不成立」(全艇フライング等)と確認(いずれも
+  データ無しが正しい状態)。「特払」(購入者がいない組み合わせでの特別払戻、
+  numberSet1表示が無い)のケースは着順表から直接組み合わせを再構成するようパーサーを
+  修正し対応。全期間の欠測は1,180件→970件に減少。出力は
+  `data/latest/results_races_gaps_classified.csv`・
+  `data/latest/results_backfill_scraping_report.csv`。`results_entries.csv`は
+  今回のスコープ外(フライング艇の特殊コード等の安全な扱いに追加検証が必要なため)。
 - 2026-10-01: `scripts/tools/backfill_odds_niren_fuku.py`・
   `scripts/tools/backfill_odds_sanren_fuku.py`(いずれも新規)で、過去60日間
   (2026-07-19〜09-17、2,435レース)の2連複・3連複の確定オッズをバックフィルした。
