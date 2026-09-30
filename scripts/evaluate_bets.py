@@ -24,6 +24,7 @@ evening_results.yml / evening_results_retry.yml から、generate_bets.py の後
 """
 import os
 
+from build_candidates_email import STADIUM_NAMES
 from common import LATEST_DIR, append_rows, read_existing_dates
 from evaluate_candidates import (
     format_miss_reason,
@@ -173,7 +174,8 @@ def main():
 
         pnl = race_return - race_bet
         status = "的中" if hits else "不的中"
-        line = (f"第{c['stadium_number']}場{c['race_number']}R [{c['rank']}] "
+        stadium_name = STADIUM_NAMES.get(c['stadium_number'], f"第{c['stadium_number']}場")
+        line = (f"{stadium_name}{c['race_number']}R [{c['rank']}] "
                 f"投資{race_bet}円 回収{race_return}円 収支{pnl:+d}円 {status}")
         if hits:
             line += " - " + ", ".join(hits)
