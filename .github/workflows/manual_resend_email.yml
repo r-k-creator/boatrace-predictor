@@ -1,0 +1,33 @@
+name: Manual resend email (手動・一回限りの送信専用)
+
+# 通常のワークフロー実行(fetch_results等)を伴わず、件名・本文を指定してメールだけを
+# 送る手動ユーティリティ。想定用途: 遅延・不具合等で当日送信できなかったレポートを、
+# データ確定後に手動で再計算・再送する場合(2026-09-30、09-29分の収支メール再送で
+# 初めて使用)。workflow_dispatchの入力をそのまま件名・本文として使うだけで、
+# リポジトリの読み書きは行わない(checkoutも不要)。
+
+on:
+  workflow_dispatch:
+    inputs:
+      subject:
+        description: "メール件名"
+        required: true
+      body:
+        description: "メール本文"
+        required: true
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email
+        uses: dawidd6/action-send-mail@v22
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: ${{ inputs.subject }}
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: "boatrace-predictor <${{ secrets.GMAIL_USERNAME }}>"
+          body: ${{ inputs.body }}
