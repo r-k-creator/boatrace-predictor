@@ -62,6 +62,16 @@ CLASSIFIED_CSV = str(Path(LATEST_DIR) / "results_races_gaps_classified.csv")
 REPORT_CSV = str(Path(LATEST_DIR) / "results_backfill_scraping_report.csv")
 
 REQUEST_INTERVAL_SEC = 1.3
+TARGET_CLASSES = ("要調査",)
+
+# 期間指定の後追い用: python scripts/tools/backfill_results_scraping.py --classified IN.csv --report OUT.csv
+# (classify_results_gaps.py --range の出力を渡す。「判定不可」も対象に含める=日程ナビが取れなかった場も
+# レース単位のページで中止/不成立/結果ありを判定できるため)
+if "--classified" in sys.argv:
+    CLASSIFIED_CSV = sys.argv[sys.argv.index("--classified") + 1]
+    TARGET_CLASSES = ("要調査", "判定不可(取得失敗等)")
+if "--report" in sys.argv:
+    REPORT_CSV = sys.argv[sys.argv.index("--report") + 1]
 
 KIMARITE_CODE = {"逃げ": "1", "差し": "2", "まくり": "3", "まくり差し": "4", "抜き": "5", "恵まれ": "6"}
 
@@ -248,7 +258,7 @@ def load_targets():
     stadiums_by_date = {}
     with open(CLASSIFIED_CSV, encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            if row["classification"] == "要調査":
+            if row["classification"] in TARGET_CLASSES:
                 stadiums_by_date.setdefault(row["date"], set()).add(row["stadium_number"])
 
     targets = []
