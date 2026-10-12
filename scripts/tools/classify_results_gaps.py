@@ -75,6 +75,13 @@ def load_empty_counts_by_stadium():
     return counts
 
 
+def load_targets_from_results(date_from, date_to):
+    """results_races.csv から直接、期間内で結果が空のレースがある(日付,場)を拾う
+    (入力のgaps CSVが無い期間、例: 支払い停止期間の後追い調査用)。"""
+    counts = load_empty_counts_by_stadium()
+    return sorted((d, int(s), n) for (d, s), n in counts.items() if date_from <= d <= date_to)
+
+
 def load_targets():
     empty_counts = load_empty_counts_by_stadium()
     targets = []
@@ -89,7 +96,14 @@ def load_targets():
 
 
 def main():
-    targets = load_targets()
+    global OUT_CSV
+    if len(sys.argv) >= 4 and sys.argv[1] == "--range":
+        # python scripts/tools/classify_results_gaps.py --range 2026-10-01 2026-10-10 [出力CSV]
+        targets = load_targets_from_results(sys.argv[2], sys.argv[3])
+        if len(sys.argv) >= 5:
+            OUT_CSV = sys.argv[4]
+    else:
+        targets = load_targets()
     print(f"[info] 確認対象(日付×場): {len(targets)}件")
 
     out_rows = []
