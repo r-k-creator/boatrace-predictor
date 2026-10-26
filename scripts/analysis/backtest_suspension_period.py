@@ -31,14 +31,24 @@ from common import RESULTS_RACES_CSV, ANALYSIS_OUTPUTS_DIR  # noqa: E402
 import generate_bets as gb  # noqa: E402
 from evaluate_bets import evaluate_bet  # noqa: E402
 
+import os  # noqa: E402
+
 DATE_FROM, DATE_TO = "2026-10-01", "2026-10-10"
-OUT_DIR = REPO_ROOT / "data" / "archive" / "suspension_backfill_20261001_20261010"
-TARGETS_CSV = Path(ANALYSIS_OUTPUTS_DIR) / "odds_target_suspension_20261001_20261010.csv"
-ODDS_CSV = Path(ANALYSIS_OUTPUTS_DIR) / "odds_backfill_suspension_20261001_20261010.csv"
+TAG = "20261001_20261010"
+# 飛び飛びの日付だけ後追いしたい時: SUSP_DATES=2026-10-11,2026-10-16 SUSP_TAG=gapdays_20261026 python ...
+DATE_LIST = [d for d in os.environ.get("SUSP_DATES", "").split(",") if d]
+if DATE_LIST:
+    DATE_FROM, DATE_TO, TAG = min(DATE_LIST), max(DATE_LIST), os.environ.get("SUSP_TAG", "gapdays")
+OUT_DIR = REPO_ROOT / "data" / "archive" / f"suspension_backfill_{TAG}"
+TARGETS_CSV = Path(ANALYSIS_OUTPUTS_DIR) / f"odds_target_suspension_{TAG}.csv"
+ODDS_CSV = Path(ANALYSIS_OUTPUTS_DIR) / f"odds_backfill_suspension_{TAG}.csv"
 
 
 def dates():
     import datetime
+    if DATE_LIST:
+        yield from sorted(DATE_LIST)
+        return
     d, end = datetime.date.fromisoformat(DATE_FROM), datetime.date.fromisoformat(DATE_TO)
     while d <= end:
         yield d.isoformat()
@@ -49,7 +59,7 @@ def load_results():
     out = {}
     with open(RESULTS_RACES_CSV, newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            if DATE_FROM <= row["race_date"] <= DATE_TO and (row.get("win_boat") or "").strip():
+            if (row["race_date"] in DATE_LIST if DATE_LIST else DATE_FROM <= row["race_date"] <= DATE_TO) and (row.get("win_boat") or "").strip():
                 out[(row["race_date"], str(int(row["stadium_number"])), str(int(row["race_number"])))] = row
     return out
 
