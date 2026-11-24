@@ -100,6 +100,8 @@ boatrace-predictor/
    前日分で候補を作ってしまう。RoutineのサンドボックスはAPIドメインへ接続できず自力取得もできない。
 
 **2026-11-24に実施済み(このセッション)**:
+- 結果欠測(10/11〜11/23の取得漏れ計125レース)をboatrace.jpから補完済み。残る空欄は中止・順延のみ
+  (`data/archive/results_races_gaps_classified_*.csv`、`results_backfill_scraping_report_*.csv`)。
 - 欠けていた出走表2日分(2026-09-18、2026-11-10)をv2から再取得し、結果データとレース数が完全一致
   することを確認(9/18=180R、11/10=156R)。結果データは11/23まで欠けなし。
 - `candidates_notify.yml`: 中身の`date`が本日(JST)でなければ買い目メールを送らず、代わりに警告メールを
