@@ -37,4 +37,14 @@ jobs:
             echo "::error::data/latest/candidates.json が本日($TODAY_JST)更新されていません(最終更新: $LAST_COMMIT_DATE)。Coworkの候補選定タスクをご確認ください。"
             exit 1
           fi
-          echo "OK: data/latest/candidates.json は本日更新されています"
+          # コミット日だけでなく、中身の"date"が本日(JST)であることも確認する。
+          # 2026-10-29〜11-24は出走表の取得が8:15に間に合わず、Routineが前日の出走表から
+          # 「前日付けの候補」を毎朝コミットしていたが、コミット日は今日なのでこのチェックを
+          # すり抜け、約4週間気付けなかった(中身の日付が前日=すでに終了したレース)。
+          CONTENT_DATE=$(python3 -c "import json;print(json.load(open('data/latest/candidates.json',encoding='utf-8')).get('date',''))")
+          echo "candidates.jsonの中身のdate: $CONTENT_DATE"
+          if [ "$CONTENT_DATE" != "$TODAY_JST" ]; then
+            echo "::error::candidates.jsonの中身のdate($CONTENT_DATE)が本日($TODAY_JST)ではありません。すでに終了したレースの候補の可能性があります(本日の出走表が8:15までに取得できていない=morning_programの遅れ/データ源の公開遅れが疑わしい)。"
+            exit 1
+          fi
+          echo "OK: data/latest/candidates.json は本日分の内容で更新されています"

@@ -17,7 +17,12 @@ on:
     branches: [main]
     paths:
       - "data/latest/candidates.json"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "候補の日付が本日(JST)でなくても送信する(過去分の再送用)"
+        type: boolean
+        default: false
 
 jobs:
   notify:
@@ -35,15 +40,55 @@ jobs:
         id: jst_date
         run: echo "date=$(TZ='Asia/Tokyo' date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
 
+      # candidates.jsonの中身のdateが本日(JST)でなければ、買い目メールは送らない。
+      # 2026-10-29〜11-24は出走表の取得が8:15に間に合わず、Routineが前日付けの候補
+      # (すでに終了したレース)をコミットし続け、このワークフローがそれを「本日の候補」
+      # として買い目付きで毎朝メール送信していた。
+      - name: Check candidates date is today (JST)
+        id: fresh
+        run: |
+          CAND_DATE=$(python3 -c "import json;print(json.load(open('data/latest/candidates.json',encoding='utf-8')).get('date',''))")
+          TODAY="${{ steps.jst_date.outputs.date }}"
+          echo "cand_date=$CAND_DATE" >> "$GITHUB_OUTPUT"
+          echo "candidates date=$CAND_DATE / today(JST)=$TODAY / force=${{ inputs.force }}"
+          if [ "$CAND_DATE" = "$TODAY" ] || [ "${{ inputs.force }}" = "true" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::candidates.jsonの中身のdate($CAND_DATE)が本日($TODAY)ではないため、買い目メールの送信を見送ります"
+          fi
+
       - name: Generate bet suggestions (rank/budget/bets)
+        if: steps.fresh.outputs.ok == 'true'
         working-directory: scripts
         run: python generate_bets.py
 
       - name: Build readable email body
+        if: steps.fresh.outputs.ok == 'true'
         working-directory: scripts
         run: python build_candidates_email.py
 
+      - name: Send stale-candidates alert (instead of bets email)
+        if: steps.fresh.outputs.ok != 'true'
+        uses: dawidd6/action-send-mail@v22
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "【要確認】本日(${{ steps.jst_date.outputs.date }})の参加候補が作られていません"
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: "boatrace-predictor <${{ secrets.GMAIL_USERNAME }}>"
+          body: |
+            candidates.json の中身の日付が ${{ steps.fresh.outputs.cand_date }} で、本日(${{ steps.jst_date.outputs.date }})ではありません。
+            すでに終了したレースの候補の可能性が高いため、買い目メールの送信は見送りました。
+
+            考えられる原因: 本日の出走表が朝8:15までに取得できていない
+            (morning_program.ymlの遅れ、提供元APIの公開遅れ、外部スケジューラのPAT失効など)。
+            詳細は docs/STATUS.md を参照してください。
+
       - name: Send candidates email
+        if: steps.fresh.outputs.ok == 'true'
         uses: dawidd6/action-send-mail@v22
         with:
           server_address: smtp.gmail.com
